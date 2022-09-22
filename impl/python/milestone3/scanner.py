@@ -5,13 +5,10 @@ Due date: 2022/09/15
 Assg: Milestone 2 - Scanner
 Goals: Write a scanner for Omega 
 """
-# Students will edit this file
 
-from functools import wraps
 from typing import Callable, Dict, Generic, TypeVar, Union
 
 import string
-from error import error
 from tokens import keywords, punctuation, Coord, Token
 
 T = TypeVar('T')
@@ -44,7 +41,7 @@ class Scanner:
         """Create a new scanner for the given input string."""
         # constexpr values from specs
         self.punc_map: Dict[str, list[str]] = dict()
-        print(f"Input: \"\"\"{input}\"\"\";")
+        # print(f"Input: \"\"\"{input}\"\"\";")
         for punc in punctuation:
             self.punc_map.setdefault(punc[0], []).append(punc)
 
@@ -149,7 +146,7 @@ class Scanner:
         if self.peek().kind == kind:
             return self.consume()
         else:
-            error(f"expected {kind}, got {self.peek().kind}", self.peek().coord)
+            raise ValueError(f"expected {kind}, got {self.peek().kind}", self.peek().coord)
 
 
 def main():
