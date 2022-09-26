@@ -78,7 +78,7 @@ class Scanner:
             start_char = line[tok_start_idx]
             token_res: Result[Token, str]
             coord = Coord(tok_start_idx + 1, line_idx + 1)
-            if start_char == ' ':
+            if start_char.isspace():
                 tok_start_idx += 1
                 continue
             elif start_char in string.digits:
@@ -119,7 +119,7 @@ class Scanner:
 
     def _parse_tokens(self, input: str) -> list[Token]:
         retval = []
-        lines = input.splitlines()
+        lines = input.split('\n')
         for line_idx, line in enumerate(lines):
             tokens = self._parse_line(line, line_idx)
             retval.extend(tokens)
@@ -161,12 +161,18 @@ def main():
             f"Token({tok.kind},{tok.value})@{tok.coord.line}:{tok.coord.col}" 
             for tok in tokens
         ])
+    def dump(s: str):
+        scanner = Scanner(s)
+        print(f"Tokens:\n{dump_tokens(scanner)}")
+    print("Examples:")
+    for ex in ["\n", "\r", "\x0c", "\x0b", '\t']:
+        print(f"Input: {str.encode(ex)}")
+        dump(ex)
     print("Enter tests here")
     line = ""
     while not line.startswith("QUIT"):
         line = input("> ")
-        scanner = Scanner(line)
-        print(f"Tokens:\n{dump_tokens(scanner)}")
+        dump(line)
 if __name__ == "__main__":
     main()
 
