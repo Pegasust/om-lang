@@ -124,7 +124,7 @@ class Scanner:
             tokens = self._parse_line(line, line_idx)
             retval.extend(tokens)
         
-        tok = Token("EOF","EOF",
+        tok = Token("EOF","",
             Coord(1+(len(lines[-1]) if len(lines) > 0 else 1), len(lines)))
         retval.append(tok)
         return retval
