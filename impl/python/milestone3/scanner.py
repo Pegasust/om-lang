@@ -57,7 +57,8 @@ class Scanner:
         while tok_start_idx < len(line):
             def const_kind(kind: str) -> Callable[[str],str]:
                 return lambda _: kind
-            def span_token(kind: Callable[[str],str], span_result: Callable[[int, str], 
+            def span_token(kind: Callable[[str],str], 
+                           span_result: Callable[[int, str], 
                     Result[bool, str]]) -> Result[Token, str]:
                 nonlocal tok_start_idx
                 end_idx = tok_start_idx
@@ -98,7 +99,8 @@ class Scanner:
             elif start_char in string.ascii_letters + '_':
                 kind: Callable[[str], str] = \
                     lambda s: s if s in keywords else "ID"
-                token_res = span_token(kind, lambda idx, s: Result.ok(s.isalnum() or s in '_'))
+                token_res = span_token(kind, lambda _, s: 
+                        Result.ok(s.isalnum() or s in '_'))
             elif start_char in self.punc_map:
                 match = {v for v in self.punc_map[start_char] if len(v) == 1}
                 possible = {v for v in self.punc_map[start_char]} - match
