@@ -88,14 +88,13 @@ class Scanner:
             else:
                 if comment_potential:
                     comment_potential = False
+
             if start_char.isspace():
                 tok_start_idx += 1
                 continue
             elif start_char in string.digits:
                 token_res = span_token(const_kind("INT"), 
-                    lambda idx, s: Result.ok(s in string.digits + '_') \
-                        if not s.isalpha() \
-                        else InvalidCharacterErr(s, Coord(idx+1, line_idx+1), line))
+                    lambda idx, s: Result.ok(s in string.digits + '_'))
             elif start_char in string.ascii_letters + '_':
                 kind: Callable[[str], str] = \
                     lambda s: s if s in keywords else "ID"

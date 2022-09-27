@@ -2,7 +2,7 @@ program  :
      { func_decl } .
 
 var_decl :
-    "var" ID type .
+    "var" ID ":" type .
 
 func_decl :
     "func" ID "(" [ ID ":" type { "," ID ":" type } ] ")" [ ":" type ] compound_stmt .
