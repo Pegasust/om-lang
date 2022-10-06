@@ -1,0 +1,39 @@
+program: { func_decl } .
+
+func_decl: "func" ID func_args compound_statement .
+
+func_args: "(" [ ID ":" type {"," ID ":" type } ] ")" .
+
+primitive_type: "int" | "bool" .
+
+type: ["[" expr "]"] type | primitive_type .
+
+compound_statement: "{" {statement} "}".
+
+statement:
+    call_statement
+    | never_statement
+    | cond_statement
+    | iter_statement.
+
+never_statement:
+    print_statement
+    | var_decl
+    | var_assign.
+
+call_statement: ["call"] ID "("  ")"
+
+print_statement: "print" expr
+
+expr: 
+
+var_decl:
+
+var_assign
+
+cond_statement:
+
+iter_statement:
+
+
+
