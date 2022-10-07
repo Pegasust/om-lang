@@ -32,32 +32,33 @@ class Result(Generic[T, E]):
         return cls(value, True)
 
 class InvalidCharacterErr(Result[T, str]):
-    def __init__(self, char: str, coord: Coord, line: Union[None,str]=None):
+    def __init__(self, char: str, coord: Coord, 
+                 line: Union[None,str]=None):
         line = '' if line is None else f"{line}\n"
-        super().__init__(f"{line}Invalid character '{char}'@{coord}", True)
+        super().__init__(f"{line}Invalid character '{char}'@{coord}", 
+                         True)
 
 class Scanner:
     def __init__(self, input: str):
         """Create a new scanner for the given input string."""
         # constexpr values from specs
         self.punc_map: Dict[str, list[str]] = dict()
-        # print(f"Input: \"\"\"{input}\"\"\";")
         for punc in punctuation:
             self.punc_map.setdefault(punc[0], []).append(punc)
 
         self.tokens = self._parse_tokens(input)
-        # tok_str = "\n".join([f"Token('{tok.kind}','{tok.value} @ {tok.coord}')" for tok in self.tokens])
-        # print(f"Tokens:\n{tok_str}")
         self.current_idx = 0
 
     def _parse_line(self, line: str, line_idx: int)->list[Token]:
         retval: list[Token] = []
         # TODO: turn this into a functional programming madness :)
         tok_start_idx = 0
+        comment_potential = False
         while tok_start_idx < len(line):
             def const_kind(kind: str) -> Callable[[str],str]:
                 return lambda _: kind
-            def span_token(kind: Callable[[str],str], span_result: Callable[[int, str], 
+            def span_token(kind: Callable[[str],str], 
+                           span_result: Callable[[int, str], 
                     Result[bool, str]]) -> Result[Token, str]:
                 nonlocal tok_start_idx
                 end_idx = tok_start_idx
@@ -78,18 +79,28 @@ class Scanner:
             start_char = line[tok_start_idx]
             token_res: Result[Token, str]
             coord = Coord(tok_start_idx + 1, line_idx + 1)
+
+            if start_char == '/':
+                if comment_potential:
+                    assert(retval[-1].kind == '/')
+                    retval.pop()
+                    break
+                comment_potential = True
+            else:
+                if comment_potential:
+                    comment_potential = False
+
             if start_char.isspace():
                 tok_start_idx += 1
                 continue
             elif start_char in string.digits:
                 token_res = span_token(const_kind("INT"), 
-                    lambda idx, s: Result.ok(s in string.digits + '_') \
-                        if not s.isalpha() \
-                        else InvalidCharacterErr(s, Coord(idx+1, line_idx+1), line))
+                    lambda idx, s: Result.ok(s in string.digits + '_'))
             elif start_char in string.ascii_letters + '_':
                 kind: Callable[[str], str] = \
                     lambda s: s if s in keywords else "ID"
-                token_res = span_token(kind, lambda idx, s: Result.ok(s.isalnum() or s in '_'))
+                token_res = span_token(kind, lambda _, s: 
+                        Result.ok(s.isalnum() or s in '_'))
             elif start_char in self.punc_map:
                 match = {v for v in self.punc_map[start_char] if len(v) == 1}
                 possible = {v for v in self.punc_map[start_char]} - match
