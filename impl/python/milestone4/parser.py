@@ -122,7 +122,7 @@ class Parser:
                 self.scanner.match(',')
                 params.append(self._expr())
         self.scanner.match(')')
-        return CallExpr(Expr(), params, func_call_token.coord)
+        return CallExpr(IdExpr(Id(func_call_token)), params, func_call_token.coord)
     # return_stmt -> "return" [ expr ]
     def _return_stmt(self) -> ReturnStmt:
         return_tok = self.scanner.match('return')
