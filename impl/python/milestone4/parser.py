@@ -19,10 +19,11 @@ class Parser:
         while self.scanner.peek().kind in {'func'}:
             func_decls.append(self._func_decl())
         return Program(func_decls)
-    # var_decl -> "var" ID type
+    # var_decl -> "var" ":" ID type
     def _var_decl(self) -> VarDecl:
         self.scanner.match('var')
         var_id = self.scanner.match('ID')
+        self.scanner.match(':')
         var_type = self._type()
         return VarDecl(Id(var_id), var_type)
     # func_decl -> "func" ID "(" [ ID ":" type { "," ID ":" type } ] ")" [ ":" type ] compound_stmt
@@ -51,173 +52,216 @@ class Parser:
         return FuncDecl(Id(func_name), params, ret_type, compound_stmt_node)
     # type -> "[" [ expr ] "]" type | "int" | "bool"
     def _type(self)->Type:
-        retval = Type()
+        primitive_type = None
         if self.scanner.peek().kind in {'['}:
             self.scanner.match('[')
+            size = None
             if self.scanner.peek().kind in {'(', '-', 'false', 'true', 'ID', 'INT'}:
-                self._expr()
+                size = self._expr()
             self.scanner.match(']')
-            self._type()
+            primitive_type = self._type()
+            return ArrayType(size, primitive_type)
         elif self.scanner.peek().kind in {'int'}:
-            self.scanner.match('int')
+            tok = self.scanner.match('int')
+            primitive_type = IntType(tok)
         elif self.scanner.peek().kind in {'bool'}:
-            self.scanner.match('bool')
+            tok = self.scanner.match('bool')
+            primitive_type = BoolType(tok)
         else:
             self.error('syntax error')
-        return retval
+        return primitive_type
     # assign_stmt -> designator "=" expr
     def _assign_stmt(self) -> AssignStmt:
-        self._designator()
-        self.scanner.match('=')
-        self._expr()
+        lhs = self._designator()
+        assignment_tok = self.scanner.match('=')
+        rhs = self._expr()
+        return AssignStmt(lhs, rhs, assignment_tok)
     # compound_stmt -> "{" { var_decl } { statement } [ return_stmt ] "}"
     def _compound_stmt(self)->CompoundStmt:
+        var_decls = []
+        stmts = []
+        return_stmt = None
         self.scanner.match('{')
         while self.scanner.peek().kind in {'var'}:
-            self._var_decl()
+            var_decls.append(self._var_decl())
         while self.scanner.peek().kind in {'call', 'if', 'print', 'while', '{', 'ID'}:
-            self._statement()
+            stmts.append(self._statement())
         if self.scanner.peek().kind in {'return'}:
-            self._return_stmt()
+            return_stmt = self._return_stmt()
         self.scanner.match('}')
+        return CompoundStmt(var_decls, stmts, return_stmt)
     # while_stmt -> "while" expr compound_stmt
     def _while_stmt(self) -> WhileStmt:
-        self.scanner.match('while')
-        self._expr()
-        self._compound_stmt()
+        while_tok = self.scanner.match('while')
+        condition_expr = self._expr()
+        while_body = self._compound_stmt()
+        return WhileStmt(condition_expr, while_body, while_tok.coord)
     # if_stmt -> "if" expr compound_stmt [ "else" compound_stmt ]
     def _if_stmt(self) -> IfStmt:
-        self.scanner.match('if')
-        self._expr()
-        self._compound_stmt()
+        if_tok = self.scanner.match('if')
+        cond_expr = self._expr()
+        if_body = self._compound_stmt()
+        else_body = None
         if self.scanner.peek().kind in {'else'}:
             self.scanner.match('else')
-            self._compound_stmt()
+            else_body = self._compound_stmt()
+        return IfStmt(cond_expr, if_body, else_body, if_tok.coord)
     # call_stmt -> "call" call
     def _call_stmt(self) -> CallStmt:
         self.scanner.match('call')
-        self._call()
+        call_expr = self._call()
+        return CallStmt(call_expr)
     # call -> ID "(" [ expr { "," expr } ] ")"
     def _call(self) -> CallExpr:
-        self.scanner.match('ID')
+        func_call_token = self.scanner.match('ID')
         self.scanner.match('(')
+        params = []
         if self.scanner.peek().kind in {'(', '-', 'false', 'true', 'ID', 'INT'}:
-            self._expr()
+            params.append(self._expr())
             while self.scanner.peek().kind in {','}:
                 self.scanner.match(',')
-                self._expr()
+                params.append(self._expr())
         self.scanner.match(')')
+        return CallExpr(Expr(), params, func_call_token.coord)
     # return_stmt -> "return" [ expr ]
     def _return_stmt(self) -> ReturnStmt:
-        self.scanner.match('return')
+        return_tok = self.scanner.match('return')
+        expr = None
         if self.scanner.peek().kind in {'(', '-', 'false', 'true', 'ID', 'INT'}:
-            self._expr()
+            expr = self._expr()
+        return ReturnStmt(expr, return_tok.coord)
     # print_stmt -> "print" expr
     def _print_stmt(self) -> PrintStmt:
         self.scanner.match('print')
-        self._expr()
+        expr = self._expr()
+        return PrintStmt(expr)
     # statement -> assign_stmt | while_stmt | if_stmt | call_stmt | compound_stmt | print_stmt
     def _statement(self) -> Stmt:
+        stmt = None
         if self.scanner.peek().kind in {'ID'}:
-            self._assign_stmt()
+            stmt = self._assign_stmt()
         elif self.scanner.peek().kind in {'while'}:
-            self._while_stmt()
+            stmt = self._while_stmt()
         elif self.scanner.peek().kind in {'if'}:
-            self._if_stmt()
+            stmt = self._if_stmt()
         elif self.scanner.peek().kind in {'call'}:
-            self._call_stmt()
+            stmt = self._call_stmt()
         elif self.scanner.peek().kind in {'{'}:
-            self._compound_stmt()
+            stmt = self._compound_stmt()
         elif self.scanner.peek().kind in {'print'}:
-            self._print_stmt()
+            stmt = self._print_stmt()
         else:
             self.error('syntax error')
+        return stmt
     # relation -> "<" | "<=" | ">" | ">=" | "==" | "!="
-    def _relation(self):
+    def _relation(self) -> Token:
         if self.scanner.peek().kind in {'<'}:
-            self.scanner.match('<')
+            return self.scanner.match('<')
         elif self.scanner.peek().kind in {'<='}:
-            self.scanner.match('<=')
+            return self.scanner.match('<=')
         elif self.scanner.peek().kind in {'>'}:
-            self.scanner.match('>')
+            return self.scanner.match('>')
         elif self.scanner.peek().kind in {'>='}:
-            self.scanner.match('>=')
+            return self.scanner.match('>=')
         elif self.scanner.peek().kind in {'=='}:
-            self.scanner.match('==')
+            return self.scanner.match('==')
         elif self.scanner.peek().kind in {'!='}:
-            self.scanner.match('!=')
+            return self.scanner.match('!=')
         else:
             self.error('syntax error')
     # addop -> "+" | "-"
-    def _addop(self):
+    def _addop(self)->Token:
         if self.scanner.peek().kind in {'+'}:
-            self.scanner.match('+')
+            return self.scanner.match('+')
         elif self.scanner.peek().kind in {'-'}:
-            self.scanner.match('-')
+            return self.scanner.match('-')
         else:
             self.error('syntax error')
     # mulop -> "*" | "/"
-    def _mulop(self):
+    def _mulop(self)->Token:
         if self.scanner.peek().kind in {'*'}:
-            self.scanner.match('*')
+            return self.scanner.match('*')
         elif self.scanner.peek().kind in {'/'}:
-            self.scanner.match('/')
+            return self.scanner.match('/')
         else:
             self.error('syntax error')
     # expr -> and_bool_expr { "or" and_bool_expr }
-    def _expr(self) -> Expr:
-        self._and_bool_expr()
+    def _expr(self) -> BinaryOp | UnaryOp | IntLiteral | TrueLiteral | FalseLiteral | IdExpr:
+        lhs_expr = self._and_bool_expr()
+        ret_expr = lhs_expr
         while self.scanner.peek().kind in {'or'}:
-            self.scanner.match('or')
-            self._and_bool_expr()
+            op = self.scanner.match('or')
+            rhs_expr = self._and_bool_expr()
+            ret_expr = BinaryOp(op, ret_expr, rhs_expr)
+        return ret_expr
     # and_bool_expr -> relation_expr { "and" relation_expr }
-    def _and_bool_expr(self) -> Expr:
-        self._relation_expr()
+    def _and_bool_expr(self) -> IdExpr | UnaryOp | BinaryOp | IntLiteral | TrueLiteral | FalseLiteral:
+        lhs_expr = self._relation_expr()
+        retval = lhs_expr
         while self.scanner.peek().kind in {'and'}:
-            self.scanner.match('and')
-            self._relation_expr()
+            op = self.scanner.match('and')
+            rhs_expr = self._relation_expr()
+            retval = BinaryOp(op, retval, rhs_expr)
+        return retval
     # relation_expr -> add_expr [ relation add_expr ]
-    def _relation_expr(self) -> Expr:
-        self._add_expr()
+    def _relation_expr(self) -> IntLiteral | BinaryOp | UnaryOp | IdExpr | TrueLiteral | FalseLiteral:
+        lhs_expr = self._add_expr()
+        retval = lhs_expr
         if self.scanner.peek().kind in {'!=', '<', '<=', '==', '>', '>='}:
-            self._relation()
-            self._add_expr()
+            op = self._relation()
+            rhs_expr = self._add_expr()
+            retval = BinaryOp(op, retval, rhs_expr)
+        return retval
     # add_expr -> mult_expr { addop mult_expr }
-    def _add_expr(self) -> Expr:
-        self._mult_expr()
+    def _add_expr(self) -> BinaryOp | IntLiteral | UnaryOp | IdExpr | TrueLiteral | FalseLiteral:
+        lhs_expr = self._mult_expr()
+        retval = lhs_expr
         while self.scanner.peek().kind in {'+', '-'}:
-            self._addop()
-            self._mult_expr()
+            op = self._addop()
+            rhs_expr = self._mult_expr()
+            retval = BinaryOp(op, retval, rhs_expr)
+        return retval
     # mult_expr -> unary_expr { mulop unary_expr }
-    def _mult_expr(self) -> Expr:
-        self._unary_expr()
+    def _mult_expr(self) -> TrueLiteral | FalseLiteral | BinaryOp | UnaryOp | IntLiteral | IdExpr:
+        lhs_expr = self._unary_expr()
+        ret_expr = lhs_expr
         while self.scanner.peek().kind in {'*', '/'}:
-            self._mulop()
-            self._unary_expr()
+            op = self._mulop()
+            rhs_expr = self._unary_expr()
+            ret_expr = BinaryOp(op, ret_expr, rhs_expr)
+        return ret_expr
     # unary_expr -> "(" expr ")" | integral_literal | "-" unary_expr | designator
-    def _unary_expr(self) -> Expr:
+    def _unary_expr(self) -> UnaryOp | IdExpr | IntLiteral | TrueLiteral | FalseLiteral:
+        retval = None
         if self.scanner.peek().kind in {'('}:
             self.scanner.match('(')
-            self._expr()
+            expr = self._expr()
             self.scanner.match(')')
+            retval = expr
         elif self.scanner.peek().kind in {'false', 'true', 'INT'}:
-            self._integral_literal()
+            retval = self._integral_literal()
         elif self.scanner.peek().kind in {'-'}:
-            self.scanner.match('-')
-            self._unary_expr()
+            op = self.scanner.match('-')
+            retval = UnaryOp(op, self._unary_expr())
+        elif self.scanner.peek().kind in {'not'}:
+            op = self.scanner.match('not');
+            retval = UnaryOp(op, self._unary_expr())
         elif self.scanner.peek().kind in {'ID'}:
-            self._designator()
+            retval = self._designator()
         else:
             self.error('syntax error')
+        return retval
     # integral_literal -> INT | "true" | "false"
-    def _integral_literal(self) -> IntLiteral:
+    def _integral_literal(self) -> IntLiteral | TrueLiteral | FalseLiteral:
         int_token = None
         if self.scanner.peek().kind in {'INT'}:
             int_token = self.scanner.match('INT')
         elif self.scanner.peek().kind in {'true'}:
             int_token = self.scanner.match('true')
+            return TrueLiteral(int_token)
         elif self.scanner.peek().kind in {'false'}:
             int_token = self.scanner.match('false')
+            return FalseLiteral(int_token)
         else:
             self.error('syntax error')
         return IntLiteral(int_token)
@@ -243,3 +287,4 @@ class Parser:
         self.scanner.match('[')
         self._expr()
         self.scanner.match(']')
+
