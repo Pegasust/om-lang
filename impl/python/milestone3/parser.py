@@ -14,11 +14,10 @@ class Parser:
     def _program(self):
         while self.scanner.peek().kind in {'func'}:
             self._func_decl()
-    # var_decl -> "var" ID ":" type
+    # var_decl -> "var" ID type
     def _var_decl(self):
         self.scanner.match('var')
         self.scanner.match('ID')
-        self.scanner.match(':')
         self._type()
     # func_decl -> "func" ID "(" [ ID ":" type { "," ID ":" type } ] ")" [ ":" type ] compound_stmt
     def _func_decl(self):
