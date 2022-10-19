@@ -1,4 +1,4 @@
-parser.py: omega.gram 
+parser.py: omega.ebnf 
 	python3 rdgen/main.py create --input $< --output $@
 test-short: tester.py parser.py short.json
 	python3 tester.py --correct short.json
