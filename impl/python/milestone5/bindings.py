@@ -1,3 +1,5 @@
+# General idea: for each type of token, we return the unbounded IdSymbol
+# The tokens that owns some scope will then resolve it to the symbolic table.
 import asts
 import error
 import symbols
@@ -15,12 +17,20 @@ def _Program(ast: asts.Program):
     global_scope = symbols.GlobalScope()
     for decl in ast.decls:
         decl.func_scope = symbols.FuncScope(global_scope)
-        func_symb = _FuncDecl(decl)
+        (func_symb, unscoped) = _FuncDecl(decl)
         func_symb.scope = global_scope
         global_scope.symtab[func_symb.name] = func_symb
+        for symb in unscoped:
+            func_symb = global_scope.lookup(symb.name)
+            if not func_symb:
+                # warning?
+                # print(f"WARNING: symbol {symb} not found on global scope")
+                continue
+            symb.set_type(func_symb.get_type())
+            symb.scope = global_scope
 
 
-def _Stmt(ast: asts.Stmt):
+def _Stmt(ast: asts.Stmt) -> list[symbols.IdSymbol]:
     if isinstance(ast, asts.AssignStmt):
         return _AssignStmt(ast)
     elif isinstance(ast, asts.IfStmt):
@@ -39,17 +49,18 @@ def _Stmt(ast: asts.Stmt):
         assert False, f"_Stmt() not implemented for {ast}"
 
 
-def _Expr(ast: asts.Expr):
+def _Expr(ast: asts.Expr) -> list[symbols.IdSymbol]:
+    retval: list[symbols.IdSymbol] = []
     if isinstance(ast, asts.BinaryOp):
-        _BinaryOp(ast)
+        retval.extend(_BinaryOp(ast))
     elif isinstance(ast, asts.UnaryOp):
-        _UnaryOp(ast)
+        retval.extend(_UnaryOp(ast))
     elif isinstance(ast, asts.CallExpr):
-        _CallExpr(ast)
+        retval.extend(_CallExpr(ast))
     elif isinstance(ast, asts.IdExpr):
-        _IdExpr(ast)
+        retval.extend(_IdExpr(ast))
     elif isinstance(ast, asts.ArrayCell):
-        _ArrayCell(ast)
+        retval.extend(_ArrayCell(ast))
     elif isinstance(ast, asts.IntLiteral):
         _IntLiteral(ast)
     elif isinstance(ast, asts.TrueLiteral):
@@ -58,6 +69,7 @@ def _Expr(ast: asts.Expr):
         _FalseLiteral(ast)
     else:
         assert False, f"_Expr() not implemented for {type(ast)}"
+    return retval
 
 
 def _Type(ast: asts.Type):
@@ -100,13 +112,14 @@ def _ArrayType(ast: asts.ArrayType):
 
 
 def _IdExpr(ast: asts.IdExpr):
-    return _Id(ast.id)
+    return [_Id(ast.id)]
 
 
 def _CallExpr(ast: asts.CallExpr):
-    _Expr(ast.fn)
+    symbs = _Expr(ast.fn)
     for arg in ast.args:
-        _Expr(arg)
+        symbs.extend(_Expr(arg))
+    return symbs
 
 
 def _Id(ast: asts.Id):
@@ -117,37 +130,41 @@ def _Id(ast: asts.Id):
 
 
 def _AssignStmt(ast: asts.AssignStmt):
-    _Expr(ast.lhs)
-    _Expr(ast.rhs)
+    symbs = _Expr(ast.lhs)
+    symbs.extend(_Expr(ast.rhs))
+    return symbs
 
 
 def _BinaryOp(ast: asts.BinaryOp):
-    _Expr(ast.left)
-    _Expr(ast.right)
+    symbs = _Expr(ast.left)
+    symbs.extend(_Expr(ast.right))
+    return symbs
 
 
 def _UnaryOp(ast: asts.UnaryOp):
-    _Expr(ast.expr)
+    return _Expr(ast.expr)
 
 
 def _PrintStmt(ast: asts.PrintStmt):
-    _Expr(ast.expr)
+    return _Expr(ast.expr)
 
 
 def _IfStmt(ast: asts.IfStmt):
-    _Expr(ast.expr)
-    _CompoundStmt(ast.thenStmt)
+    symbs = _Expr(ast.expr)
+    symbs.extend(_CompoundStmt(ast.thenStmt))
     if ast.elseStmt is not None:
-        _CompoundStmt(ast.elseStmt)
+        symbs.extend(_CompoundStmt(ast.elseStmt))
+    return symbs
 
 
 def _WhileStmt(ast: asts.WhileStmt):
-    _Expr(ast.expr)
-    _CompoundStmt(ast.stmt)
+    symbs = _Expr(ast.expr)
+    symbs.extend(_CompoundStmt(ast.stmt))
+    return symbs
 
 
 def _CallStmt(ast: asts.CallStmt):
-    _CallExpr(ast.call)
+    return _CallExpr(ast.call)
 
 
 def _CompoundStmt(ast: asts.CompoundStmt):
@@ -161,18 +178,34 @@ def _CompoundStmt(ast: asts.CompoundStmt):
         local_scope.symtab[decl_id_symb.name] = decl_id_symb
         decl_id_symb.scope = local_scope
 
+    unscoped_symbs: list[symbols.IdSymbol] = []
     for stmt in ast.stmts:
-        stmt_symb = _Stmt(stmt)
-        if stmt_symb:
-            stmt_symb.parent = local_scope
+        # how to handle compound statements?
+        # TODO: Add more nodes that may create new scopes here!
+        if isinstance(stmt, asts.CompoundStmt):
+            stmt.local_scope = symbols.LocalScope(local_scope)
+        unscoped_symbs.extend(_Stmt(stmt))
 
     if ast.return_stmt is not None:
         ast.return_stmt.enclosing_scope = local_scope
-        ret_symb = _Stmt(ast.return_stmt)
-        if ret_symb:
-            ret_symb.parent = local_scope
+        unscoped_symbs.extend(_Stmt(ast.return_stmt))
 
-    return local_scope
+    # drain filter would be ideal here
+    _unscoped: list[symbols.IdSymbol] = []
+    for symb in unscoped_symbs:
+        decl = local_scope.lookup(symb.name)
+        # print(f"{symb=}, {decl=}")
+        if not decl:
+            _unscoped.append(symb)
+            continue
+        if not isinstance(decl, symbols.IdSymbol):
+            # print(f"WARNING: {decl} is not IdSymbol")
+            continue
+
+        symb.set_type(decl.get_type())
+        symb.scope = decl.scope
+
+    return _unscoped # Since we have processed all unscoped symbols
 
 
 def _FuncDecl(ast: asts.FuncDecl):
@@ -199,28 +232,29 @@ def _FuncDecl(ast: asts.FuncDecl):
 
     # parse the statements within the function
     ast.body.local_scope = symbols.LocalScope(func_scope)
-    _CompoundStmt(ast.body)
-    return id_symb
+    unscoped_symbs = _CompoundStmt(ast.body)
+    return (id_symb, unscoped_symbs)
 
 
 def _ReturnStmt(ast: asts.ReturnStmt):
     if ast.expr is not None:
-        _Expr(ast.expr)
-        
+        return _Expr(ast.expr)
+    return []
 
 
 def _ArrayCell(ast: asts.ArrayCell):
-    _Expr(ast.arr)
-    _Expr(ast.idx)
+    symbs = _Expr(ast.arr)
+    symbs.extend(_Expr(ast.idx))
+    return symbs
 
 
-def _IntLiteral(ast: asts.IntLiteral):
+def _IntLiteral(_ast: asts.IntLiteral):
     pass
 
 
-def _TrueLiteral(ast: asts.TrueLiteral):
+def _TrueLiteral(_ast: asts.TrueLiteral):
     pass
 
 
-def _FalseLiteral(ast: asts.FalseLiteral):
+def _FalseLiteral(_ast: asts.FalseLiteral):
     pass
