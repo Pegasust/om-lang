@@ -27,13 +27,13 @@ def test_bindings(student: asts.AST, expected: asts.AST):
 
 
 def print_test(test, retval, out, err):
-    print(f"input: {test['input']}")
-    print(f"expected return value: {test['output']}")
-    print(f"actual return value: {retval}")
-    print(f"expected stdout: {test['stdout']}")
-    print(f"stdout: {out.getvalue()}")
-    print(f"expected stderr: {test['stderr']}")
-    print(f"stderr: {err.getvalue()}")
+    print(f"=== input ===\n{test['input']}")
+    print(f"=== expected retval ===\n{test['output']}")
+    print(f"=== actual retval ===\n{retval}")
+    print(f"=== expected stdout ===\n{test['stdout']}")
+    print(f"=== stdout ===\n{out.getvalue()}")
+    print(f"=== expected stderr ===\n{test['stderr']}")
+    print(f"=== stderr ===\n{err.getvalue()}")
 
 
 def run(args):
