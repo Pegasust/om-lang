@@ -10,11 +10,11 @@ class Parser:
         raise Exception(msg + " at " + str(self.scanner.peek()))
 
     def parse(self) -> Program:
-        program = self._program()
+        program = self.program()
         self.scanner.match("EOF")
         return program
     # program -> { func_decl }
-    def _program(self) -> Program:
+    def program(self) -> Program:
         func_decls = []
         while self.scanner.peek().kind in {'func'}:
             func_decls.append(self._func_decl())

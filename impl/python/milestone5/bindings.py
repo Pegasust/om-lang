@@ -2,7 +2,6 @@ import asts
 import error
 import symbols
 
-
 # This is the entry point for the visitor.
 def program(ast: asts.Program):
     _Program(ast)
@@ -16,27 +15,29 @@ def _Program(ast: asts.Program):
     global_scope = symbols.GlobalScope()
     for decl in ast.decls:
         func_symb = _FuncDecl(decl)
-        func_symb.parent = global_scope
-        global_scope.symtab[func_symb] = func_symb
+        func_symb.scope.parent = global_scope
+        global_scope.symtab[func_symb.name] = func_symb
+        # print(f"func_decl: {decl}, func_symb: {func_symb}")
+    print(f"===  AST  ===\n{ast}")
 
 
 def _Stmt(ast: asts.Stmt):
     if isinstance(ast, asts.AssignStmt):
-        _AssignStmt(ast)
+        return _AssignStmt(ast)
     elif isinstance(ast, asts.IfStmt):
-        _IfStmt(ast)
+        return _IfStmt(ast)
     elif isinstance(ast, asts.WhileStmt):
-        _WhileStmt(ast)
+        return _WhileStmt(ast)
     elif isinstance(ast, asts.CallStmt):
-        _CallStmt(ast)
+        return _CallStmt(ast)
     elif isinstance(ast, asts.CompoundStmt):
         return _CompoundStmt(ast)
     elif isinstance(ast, asts.PrintStmt):
-        _PrintStmt(ast)
+        return _PrintStmt(ast)
     elif isinstance(ast, asts.ReturnStmt):
-        _ReturnStmt(ast)
+        return _ReturnStmt(ast)
     else:
-        assert False, f"_Stmt() not implemented for {}"
+        assert False, f"_Stmt() not implemented for {ast}"
 
 
 def _Expr(ast: asts.Expr):
@@ -108,8 +109,9 @@ def _CallExpr(ast: asts.CallExpr):
 
 
 def _Id(ast: asts.Id):
-    return symbols.IdSymbol(ast.token.value, symbols.PhonyScope())
-    pass
+    ast.symbol = symbols.IdSymbol(ast.token.value, symbols.PhonyScope())
+    return ast.symbol
+
 
 
 def _AssignStmt(ast: asts.AssignStmt):
@@ -147,17 +149,22 @@ def _CallStmt(ast: asts.CallStmt):
 
 
 def _CompoundStmt(ast: asts.CompoundStmt):
-    local_scope = symbols.LocalScope(None)
+    local_scope = symbols.LocalScope(symbols.PhonyScope())
     for decl in ast.decls:
         decl_id_symb = _VarDecl(decl)
         decl_id_symb.scope = local_scope
         local_scope.symtab[decl_id_symb.name] = decl_id_symb
+        print(f"_CompoundStmt: decl: {decl_id_symb}")
     for stmt in ast.stmts:
-        # How do we handle compound stmt within compount stmt?
+        # How do we handle compound stmt within compound stmt?
         stmt_symb = _Stmt(stmt)
-        stmt_symb.parent = local_scope
+        if stmt_symb:
+            stmt_symb.parent = local_scope
     if ast.return_stmt is not None:
-        _Stmt(ast.return_stmt)
+        ret_symb = _Stmt(ast.return_stmt)
+        if ret_symb:
+            ret_symb.parent = local_scope
+    ast.local_scope = local_scope
     return local_scope
 
 
@@ -171,9 +178,9 @@ def _FuncDecl(ast: asts.FuncDecl):
         func_scope.symtab[param_symb.name] = param_symb
     if ast.ret_type_ast is not None:
         _Type(ast.ret_type_ast)
-
     compound_scope = _CompoundStmt(ast.body)
     compound_scope.parent = func_scope
+    ast.func_scope = func_scope
     return id_symb
 
 

@@ -10,11 +10,11 @@ class Parser:
         raise Exception(msg + " at " + str(self.scanner.peek()))
 
     def parse(self) -> Program:
-        program = self.program()
+        program = self._program()
         self.scanner.match("EOF")
         return program
     # program -> { func_decl }
-    def program(self) -> Program:
+    def _program(self) -> Program:
         func_decls = []
         while self.scanner.peek().kind in {'func'}:
             func_decls.append(self._func_decl())
@@ -266,25 +266,33 @@ class Parser:
             self.error('syntax error')
         return IntLiteral(int_token)
     # designator -> ID [ arguments ] { selector }
-    def _designator(self) -> IdExpr:
+    def _designator(self) -> IdExpr | CallExpr | ArrayCell:
         id_tok = self.scanner.match('ID')
+        my_expr = IdExpr(Id(id_tok))
         if self.scanner.peek().kind in {'('}:
-            self._arguments()
+            args = self._arguments()
+            my_expr = CallExpr(my_expr, args, id_tok.coord)
+        selectors = []
         while self.scanner.peek().kind in {'['}:
-            self._selector()
-        return IdExpr(Id(id_tok))
+            selectors.append(self._selector())
+        for selector in selectors:
+            my_expr = ArrayCell(my_expr, selector, id_tok.coord)
+        return my_expr
     # arguments -> "(" [ expr { "," expr } ] ")"
-    def _arguments(self):
+    def _arguments(self)->list[Expr]:
+        args = []
         self.scanner.match('(')
         if self.scanner.peek().kind in {'(', '-', 'false', 'true', 'ID', 'INT'}:
-            self._expr()
+            args.append(self._expr())
             while self.scanner.peek().kind in {','}:
                 self.scanner.match(',')
-                self._expr()
+                args.append(self._expr())
         self.scanner.match(')')
+        return args
     # selector -> "[" expr "]"
     def _selector(self):
         self.scanner.match('[')
-        self._expr()
+        select_expr = self._expr()
         self.scanner.match(']')
+        return select_expr
 
