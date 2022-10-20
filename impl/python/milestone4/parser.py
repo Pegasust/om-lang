@@ -186,7 +186,7 @@ class Parser:
         else:
             self.error('syntax error')
     # expr -> and_bool_expr { "or" and_bool_expr }
-    def _expr(self) -> BinaryOp | UnaryOp | IntLiteral | TrueLiteral | FalseLiteral | IdExpr:
+    def _expr(self) -> CallExpr | ArrayCell | BinaryOp | UnaryOp | IntLiteral | TrueLiteral | FalseLiteral | IdExpr:
         lhs_expr = self._and_bool_expr()
         ret_expr = lhs_expr
         while self.scanner.peek().kind in {'or'}:
@@ -195,7 +195,7 @@ class Parser:
             ret_expr = BinaryOp(op, ret_expr, rhs_expr)
         return ret_expr
     # and_bool_expr -> relation_expr { "and" relation_expr }
-    def _and_bool_expr(self) -> IdExpr | UnaryOp | BinaryOp | IntLiteral | TrueLiteral | FalseLiteral:
+    def _and_bool_expr(self) -> CallExpr | ArrayCell | IdExpr | UnaryOp | BinaryOp | IntLiteral | TrueLiteral | FalseLiteral:
         lhs_expr = self._relation_expr()
         retval = lhs_expr
         while self.scanner.peek().kind in {'and'}:
@@ -204,7 +204,7 @@ class Parser:
             retval = BinaryOp(op, retval, rhs_expr)
         return retval
     # relation_expr -> add_expr [ relation add_expr ]
-    def _relation_expr(self) -> IntLiteral | BinaryOp | UnaryOp | IdExpr | TrueLiteral | FalseLiteral:
+    def _relation_expr(self) -> CallExpr | ArrayCell | IntLiteral | BinaryOp | UnaryOp | IdExpr | TrueLiteral | FalseLiteral:
         lhs_expr = self._add_expr()
         retval = lhs_expr
         if self.scanner.peek().kind in {'!=', '<', '<=', '==', '>', '>='}:
@@ -213,7 +213,7 @@ class Parser:
             retval = BinaryOp(op, retval, rhs_expr)
         return retval
     # add_expr -> mult_expr { addop mult_expr }
-    def _add_expr(self) -> BinaryOp | IntLiteral | UnaryOp | IdExpr | TrueLiteral | FalseLiteral:
+    def _add_expr(self) -> CallExpr | ArrayCell | BinaryOp | IntLiteral | UnaryOp | IdExpr | TrueLiteral | FalseLiteral:
         lhs_expr = self._mult_expr()
         retval = lhs_expr
         while self.scanner.peek().kind in {'+', '-'}:
@@ -222,7 +222,7 @@ class Parser:
             retval = BinaryOp(op, retval, rhs_expr)
         return retval
     # mult_expr -> unary_expr { mulop unary_expr }
-    def _mult_expr(self) -> TrueLiteral | FalseLiteral | BinaryOp | UnaryOp | IntLiteral | IdExpr:
+    def _mult_expr(self) -> CallExpr | ArrayCell | TrueLiteral | FalseLiteral | BinaryOp | UnaryOp | IntLiteral | IdExpr:
         lhs_expr = self._unary_expr()
         ret_expr = lhs_expr
         while self.scanner.peek().kind in {'*', '/'}:
@@ -231,7 +231,7 @@ class Parser:
             ret_expr = BinaryOp(op, ret_expr, rhs_expr)
         return ret_expr
     # unary_expr -> "(" expr ")" | integral_literal | "-" unary_expr | designator
-    def _unary_expr(self) -> UnaryOp | IdExpr | IntLiteral | TrueLiteral | FalseLiteral:
+    def _unary_expr(self) -> ArrayCell | BinaryOp | CallExpr | UnaryOp | IdExpr | IntLiteral | TrueLiteral | FalseLiteral:
         retval = None
         if self.scanner.peek().kind in {'('}:
             self.scanner.match('(')
