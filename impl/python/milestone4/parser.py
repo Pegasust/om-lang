@@ -114,7 +114,7 @@ class Parser:
     # call -> ID "(" [ expr { "," expr } ] ")"
     def _call(self) -> CallExpr:
         func_call_token = self.scanner.match('ID')
-        self.scanner.match('(')
+        call_begin = self.scanner.match('(').coord
         params = []
         if self.scanner.peek().kind in {'(', '-', 'false', 'true', 'ID', 'INT'}:
             params.append(self._expr())
@@ -122,7 +122,7 @@ class Parser:
                 self.scanner.match(',')
                 params.append(self._expr())
         self.scanner.match(')')
-        return CallExpr(IdExpr(Id(func_call_token)), params, func_call_token.coord)
+        return CallExpr(IdExpr(Id(func_call_token)), params, call_begin)
     # return_stmt -> "return" [ expr ]
     def _return_stmt(self) -> ReturnStmt:
         return_tok = self.scanner.match('return')
@@ -270,29 +270,30 @@ class Parser:
         id_tok = self.scanner.match('ID')
         my_expr = IdExpr(Id(id_tok))
         if self.scanner.peek().kind in {'('}:
-            args = self._arguments()
-            my_expr = CallExpr(my_expr, args, id_tok.coord)
-        selectors = []
-        while self.scanner.peek().kind in {'['}:
-            selectors.append(self._selector())
-        for selector in selectors:
-            my_expr = ArrayCell(my_expr, selector, id_tok.coord)
+            (args, func_begin) = self._arguments()
+            my_expr = CallExpr(my_expr, args, func_begin)
+        def selector_generator():
+            while self.scanner.peek().kind in {'['}:
+                yield self._selector()
+        selectors = (selector_generator())
+        for (selector, begin) in selectors:
+            my_expr = ArrayCell(my_expr, selector, begin)
         return my_expr
     # arguments -> "(" [ expr { "," expr } ] ")"
-    def _arguments(self)->list[Expr]:
+    def _arguments(self)->tuple[list[Expr], Coord]:
         args = []
-        self.scanner.match('(')
+        func_tok = self.scanner.match('(')
         if self.scanner.peek().kind in {'(', '-', 'false', 'true', 'ID', 'INT'}:
             args.append(self._expr())
             while self.scanner.peek().kind in {','}:
                 self.scanner.match(',')
                 args.append(self._expr())
         self.scanner.match(')')
-        return args
+        return (args, func_tok.coord)
     # selector -> "[" expr "]"
     def _selector(self):
-        self.scanner.match('[')
+        begin_tok = self.scanner.match('[')
         select_expr = self._expr()
         self.scanner.match(']')
-        return select_expr
+        return (select_expr, begin_tok.coord)
 
