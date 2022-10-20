@@ -14,41 +14,42 @@ def _Program(ast: asts.Program):
     # monofile repo
     global_scope = symbols.GlobalScope()
     for decl in ast.decls:
-        func_symb = _FuncDecl(decl, global_scope)
+        decl.func_scope = symbols.FuncScope(global_scope)
+        func_symb = _FuncDecl(decl)
         func_symb.scope = global_scope
         global_scope.symtab[func_symb.name] = func_symb
 
 
-def _Stmt(ast: asts.Stmt, scope: symbols.Scope):
+def _Stmt(ast: asts.Stmt):
     if isinstance(ast, asts.AssignStmt):
-        return _AssignStmt(ast, scope)
+        return _AssignStmt(ast)
     elif isinstance(ast, asts.IfStmt):
-        return _IfStmt(ast, scope)
+        return _IfStmt(ast)
     elif isinstance(ast, asts.WhileStmt):
-        return _WhileStmt(ast, scope)
+        return _WhileStmt(ast)
     elif isinstance(ast, asts.CallStmt):
-        return _CallStmt(ast, scope)
+        return _CallStmt(ast)
     elif isinstance(ast, asts.CompoundStmt):
-        return _CompoundStmt(ast, scope)
+        return _CompoundStmt(ast)
     elif isinstance(ast, asts.PrintStmt):
-        return _PrintStmt(ast, scope)
+        return _PrintStmt(ast)
     elif isinstance(ast, asts.ReturnStmt):
-        return _ReturnStmt(ast, scope)
+        return _ReturnStmt(ast)
     else:
         assert False, f"_Stmt() not implemented for {ast}"
 
 
-def _Expr(ast: asts.Expr, scope: symbols.Scope):
+def _Expr(ast: asts.Expr):
     if isinstance(ast, asts.BinaryOp):
-        _BinaryOp(ast, scope)
+        _BinaryOp(ast)
     elif isinstance(ast, asts.UnaryOp):
-        _UnaryOp(ast, scope)
+        _UnaryOp(ast)
     elif isinstance(ast, asts.CallExpr):
-        _CallExpr(ast, scope)
+        _CallExpr(ast)
     elif isinstance(ast, asts.IdExpr):
-        _IdExpr(ast, scope)
+        _IdExpr(ast)
     elif isinstance(ast, asts.ArrayCell):
-        _ArrayCell(ast, scope)
+        _ArrayCell(ast)
     elif isinstance(ast, asts.IntLiteral):
         _IntLiteral(ast)
     elif isinstance(ast, asts.TrueLiteral):
@@ -70,15 +71,15 @@ def _Type(ast: asts.Type):
         assert False, f"_Type() not implemented for {type(ast)}"
 
 
-def _VarDecl(ast: asts.VarDecl, scope: symbols.Scope):
-    id_symb = _Id(ast.id, scope)
+def _VarDecl(ast: asts.VarDecl):
+    id_symb = _Id(ast.id)
     var_type = _Type(ast.type_ast)
     id_symb.set_type(var_type)
     return id_symb
 
 
-def _ParamDecl(ast: asts.ParamDecl, scope: symbols.Scope):
-    id_symb = _Id(ast.id, scope)
+def _ParamDecl(ast: asts.ParamDecl):
+    id_symb = _Id(ast.id)
     id_symb.set_type(_Type(ast.type_ast))
     return id_symb
 
@@ -94,66 +95,66 @@ def _BoolType(ast: asts.BoolType):
 def _ArrayType(ast: asts.ArrayType):
     elem_type = _Type(ast.element_type_ast)
     if ast.size is not None:
-        _Expr(ast.size, symbols.PhonyScope())
+        _Expr(ast.size)
     return symbols.ArrayType(elem_type)
 
 
-def _IdExpr(ast: asts.IdExpr, scope: symbols.Scope):
-    return _Id(ast.id, scope)
+def _IdExpr(ast: asts.IdExpr):
+    return _Id(ast.id)
 
 
-def _CallExpr(ast: asts.CallExpr, scope: symbols.Scope):
-    _Expr(ast.fn, scope)
+def _CallExpr(ast: asts.CallExpr):
+    _Expr(ast.fn)
     for arg in ast.args:
-        _Expr(arg, scope)
+        _Expr(arg)
 
 
-def _Id(ast: asts.Id, scope: symbols.Scope):
+def _Id(ast: asts.Id):
     ast.symbol = symbols.IdSymbol(ast.token.value, symbols.PhonyScope())
     ast.symbol.name = ast.token.value
     return ast.symbol
 
 
 
-def _AssignStmt(ast: asts.AssignStmt, scope: symbols.Scope):
-    _Expr(ast.lhs, scope)
-    _Expr(ast.rhs, scope)
+def _AssignStmt(ast: asts.AssignStmt):
+    _Expr(ast.lhs)
+    _Expr(ast.rhs)
 
 
-def _BinaryOp(ast: asts.BinaryOp, scope: symbols.Scope):
-    _Expr(ast.left, scope)
-    _Expr(ast.right, scope)
+def _BinaryOp(ast: asts.BinaryOp):
+    _Expr(ast.left)
+    _Expr(ast.right)
 
 
-def _UnaryOp(ast: asts.UnaryOp, scope: symbols.Scope):
-    _Expr(ast.expr, scope)
+def _UnaryOp(ast: asts.UnaryOp):
+    _Expr(ast.expr)
 
 
-def _PrintStmt(ast: asts.PrintStmt, scope: symbols.Scope):
-    _Expr(ast.expr, scope)
+def _PrintStmt(ast: asts.PrintStmt):
+    _Expr(ast.expr)
 
 
-def _IfStmt(ast: asts.IfStmt, scope: symbols.Scope):
-    _Expr(ast.expr, scope)
-    _CompoundStmt(ast.thenStmt, scope)
+def _IfStmt(ast: asts.IfStmt):
+    _Expr(ast.expr)
+    _CompoundStmt(ast.thenStmt)
     if ast.elseStmt is not None:
-        _CompoundStmt(ast.elseStmt, scope)
+        _CompoundStmt(ast.elseStmt)
 
 
-def _WhileStmt(ast: asts.WhileStmt, scope: symbols.Scope):
-    _Expr(ast.expr, scope)
-    _CompoundStmt(ast.stmt, scope)
+def _WhileStmt(ast: asts.WhileStmt):
+    _Expr(ast.expr)
+    _CompoundStmt(ast.stmt)
 
 
-def _CallStmt(ast: asts.CallStmt, scope: symbols.Scope):
-    _CallExpr(ast.call, scope)
+def _CallStmt(ast: asts.CallStmt):
+    _CallExpr(ast.call)
 
 
-def _CompoundStmt(ast: asts.CompoundStmt, scope: symbols.Scope):
+def _CompoundStmt(ast: asts.CompoundStmt):
     local_scope = ast.local_scope
 
     for decl in ast.decls:
-        decl_id_symb = _VarDecl(decl, local_scope)
+        decl_id_symb = _VarDecl(decl)
         if decl_id_symb.name in local_scope.symtab.keys():
             error.error(f"Var \"{decl_id_symb.name}\" declared more than once",
                         decl.id.token.coord)
@@ -161,21 +162,24 @@ def _CompoundStmt(ast: asts.CompoundStmt, scope: symbols.Scope):
         decl_id_symb.scope = local_scope
 
     for stmt in ast.stmts:
-        stmt_symb = _Stmt(stmt, local_scope)
+        stmt_symb = _Stmt(stmt)
+        if stmt_symb:
+            stmt_symb.parent = local_scope
 
     if ast.return_stmt is not None:
-        ret_symb = _Stmt(ast.return_stmt, local_scope)
+        ast.return_stmt.enclosing_scope = local_scope
+        ret_symb = _Stmt(ast.return_stmt)
         if ret_symb:
             ret_symb.parent = local_scope
 
     return local_scope
 
 
-def _FuncDecl(ast: asts.FuncDecl, scope: symbols.Scope):
-    id_symb = _Id(ast.id, scope)
+def _FuncDecl(ast: asts.FuncDecl):
+    id_symb = _Id(ast.id)
     func_scope = ast.func_scope
 
-    param_symbs = [_ParamDecl(param, func_scope) for param in ast.params]
+    param_symbs = [_ParamDecl(param) for param in ast.params]
     for param, param_symb in zip(ast.params,param_symbs):
         if param_symb.name in func_scope.symtab.keys():
             error.error(
@@ -195,18 +199,19 @@ def _FuncDecl(ast: asts.FuncDecl, scope: symbols.Scope):
 
     # parse the statements within the function
     ast.body.local_scope = symbols.LocalScope(func_scope)
-    _CompoundStmt(ast.body, func_scope)
+    _CompoundStmt(ast.body)
     return id_symb
 
 
-def _ReturnStmt(ast: asts.ReturnStmt, scope: symbols.Scope):
+def _ReturnStmt(ast: asts.ReturnStmt):
     if ast.expr is not None:
-        return _Expr(ast.expr)
+        _Expr(ast.expr)
+        
 
 
-def _ArrayCell(ast: asts.ArrayCell, scope: symbols.Scope):
-    _Expr(ast.arr, scope)
-    _Expr(ast.idx, scope)
+def _ArrayCell(ast: asts.ArrayCell):
+    _Expr(ast.arr)
+    _Expr(ast.idx)
 
 
 def _IntLiteral(ast: asts.IntLiteral):
