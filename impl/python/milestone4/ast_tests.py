@@ -11,7 +11,6 @@ def main():
         lexer = scanner.Scanner(p)
         psr = parser.Parser(lexer)
         computed: asts.Program = psr.parse()
-        print(f"Test {i}: {p}")
         if tree != computed:
             failed += 1
             print(f"Test {i} failed")
