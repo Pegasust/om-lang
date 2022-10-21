@@ -222,7 +222,7 @@ def _FuncDecl(ast: asts.FuncDecl):
         func_scope.symtab[param_symb.name] = param_symb
         param_symb.scope = func_scope
 
-    ret_type = None
+    ret_type = symbols.VoidType()
     if ast.ret_type_ast is not None:
         ret_type = _Type(ast.ret_type_ast)
     # assign function type of this function

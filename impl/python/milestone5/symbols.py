@@ -81,11 +81,11 @@ class IdSymbol(Symbol):
         return self.semantic_type
 
     def __eq__(self, other: "Symbol") -> bool:
-        print(f"IdSymbol.__eq__: {self}, {other}")
-        same_instance = isinstance(other, IdSymbol)
-        same_name = self.name == other.name
-        same_depth = self.scope.depth() == other.scope.depth()
-        print(f"{same_instance=} {same_name=} {same_depth=}")
+        # print(f"IdSymbol.__eq__: {self}, {other}")
+        # same_instance = isinstance(other, IdSymbol)
+        # same_name = self.name == other.name
+        # same_depth = self.scope.depth() == other.scope.depth()
+        # print(f"{same_instance=} {same_name=} {same_depth=}")
         return (
             isinstance(other, IdSymbol)
             and self.name == other.name
@@ -132,8 +132,16 @@ class Scope:
             return self.parent.depth() + 1
         return 0
 
+    def parent_fmt(self):
+        def parent_gen():
+            parent = self.parent
+            while parent is not None:
+                yield parent
+                parent = parent.parent
+        return f"({self.depth()}: {list((p.__class__.__name__, len(p.symtab)) for p in parent_gen())})"
+
     def __repr__(self):
-        return f"{self.__class__.__name__}(syms: ({len(self.symtab)}), parent: {self.parent})"
+        return f"{self.__class__.__name__}(syms: ({len(self.symtab)}), parent: {self.parent_fmt()})"
 
 
 # holds parameters and return type
@@ -150,7 +158,7 @@ class FuncScope(Scope):
         self.ret_type = t
 
     def __eq__(self, other: Scope) -> bool:
-        print(f"FuncScope.__eq__: {self}, {other}")
+        # print(f"FuncScope.__eq__: {self}, {other}")
         return (
             isinstance(other, FuncScope)
             and self.symtab == other.symtab
@@ -159,10 +167,14 @@ class FuncScope(Scope):
         )
 
     def __repr__(self):
-        ret_type = f"ret_type: {self.ret_type})"
+        ret_type = f"{self.ret_type})"
         syms = f"syms: ({len(self.symtab)})"
-        parent = f"parent: {self.parent}"
-        return f"FuncScope({syms}, {parent}, {ret_type}"
+        def parent_gen():
+            parent = self.parent
+            while parent is not None:
+                yield parent
+                parent = parent.parent
+        return f"FuncScope({syms}, {self.parent_fmt()}; ->{ret_type}"
 
 # holds symbols in compound statement
 class LocalScope(Scope):
@@ -174,7 +186,7 @@ class LocalScope(Scope):
         return self.parent.get_return_type()
 
     def __eq__(self, other: Scope) -> bool:
-        print(f"LocalScope.__eq__: {self}, {other}")
+        # print(f"LocalScope.__eq__: {self}, {other}")
         return (
             isinstance(other, LocalScope)
             and self.symtab == other.symtab
@@ -192,7 +204,7 @@ class GlobalScope(Scope):
         assert False, "bad call to get_return_type()"
 
     def __eq__(self, other: Scope) -> bool:
-        print(f"GlobalScope.__eq__: {self}, {other}")
+        # print(f"GlobalScope.__eq__: {self}, {other}")
         return isinstance(other, GlobalScope) and self.symtab == other.symtab
 
 
@@ -205,5 +217,5 @@ class PhonyScope(Scope):
         assert False, "bad call to get_return_type()"
 
     def __eq__(self, other: Scope) -> bool:
-        print(f"PhonyScope.__eq__: {self}, {other}")
+        # print(f"PhonyScope.__eq__: {self}, {other}")
         return isinstance(other, PhonyScope) and self.symtab == other.symtab

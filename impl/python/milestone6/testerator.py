@@ -143,7 +143,7 @@ def parse_args():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     create = subparsers.add_parser("create", help="create a test pickle")
-    create.add_argument("input", type=str, nargs="+", help="input file(s)")
+    create.add_argument("--input", type=str, nargs="+", help="input file(s)")
     create.add_argument("--output", type=str, required=True, help="output file")
     create.add_argument("--function", type=str, required=True, help="function to test")
     create.add_argument(
@@ -157,7 +157,7 @@ def parse_args():
     format.add_argument("--omega", action="store_true", help="input is a json")
 
     run = subparsers.add_parser("run", help="run tests in a pickle file")
-    run.add_argument("input", nargs="+", help="input test pickle file(s)")
+    run.add_argument("--input", nargs="+", help="input test pickle file(s)")
     run.add_argument("--verbose", action="store_true", help="enable verbose output")
 
     return parser.parse_args()

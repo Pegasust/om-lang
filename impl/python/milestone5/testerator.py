@@ -58,6 +58,8 @@ def run(args):
             print_test(test, student, out, err)
             print("---")
         else:
+            print_test(test, student, out, err)
+            print("---")
             correct += 1
     print(f"{correct} / {len(tests)} correct")
     return (correct, len(tests))

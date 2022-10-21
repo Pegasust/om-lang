@@ -24,8 +24,6 @@ class AST:
     def same_symbols(self, other: "AST") -> bool:
         def fn(a: AST, b: AST) -> bool:
             if isinstance(a, Id) and isinstance(b, Id):
-                if a.symbol != b.symbol:
-                    print("FAILED:", a.symbol, b.symbol)
                 return a.symbol == b.symbol
             return True
 
@@ -73,10 +71,10 @@ class Id(AST):
         self.semantic_type: symbols.Type = symbols.PhonyType()
 
     def pprint(self, indent: str):
-        print(indent + f"Id({self.token}")
+        print(indent + f"Id({self.token}, {self.semantic_type})")
 
     def __repr__(self):
-        return f"Id({self.token.__repr__()})"
+        return f"Id({self.token.__repr__()}, {self.symbol}, {self.semantic_type})"
 
     def compare(self, other: AST, fn: Callable[[AST, AST], bool]) -> bool:
         return isinstance(other, Id) and fn(self, other) and self.token == other.token
@@ -96,7 +94,7 @@ class VarDecl(Decl):
         self.type_ast: Type = type
 
     def pprint(self, indent: str):
-        print(indent + "VarDecl")
+        print(indent + f"VarDecl {self.semantic_type}")
         self.id.pprint(indent + i4)
         self.type_ast.pprint(indent + i4)
 
@@ -118,7 +116,7 @@ class ParamDecl(Decl):
         self.type_ast: Type = type
 
     def pprint(self, indent: str):
-        print(indent + "ParamDecl")
+        print(indent + f"ParamDecl {self.semantic_type}")
         self.id.pprint(indent + i4)
         self.type_ast.pprint(indent + i4)
 
@@ -234,7 +232,7 @@ class CompoundStmt(Stmt):
         self.local_scope: symbols.Scope = symbols.PhonyScope()
 
     def pprint(self, indent: str):
-        print(indent + "CompoundStmt")
+        print(indent + f"CompoundStmt [{self.local_scope}]")
         for decl in self.decls:
             decl.pprint(indent + i4)
         for stmt in self.stmts:
@@ -243,7 +241,7 @@ class CompoundStmt(Stmt):
             self.return_stmt.pprint(indent + i4)
 
     def __repr__(self):
-        return f"CompoundStmt({self.decls}, {self.stmts}, {self.return_stmt})"
+        return f"CompoundStmt({self.decls}, {self.stmts}, {self.return_stmt}, {self.local_scope})"
 
     def compare(self, other: AST, fn: Callable[[AST, AST], bool]) -> bool:
         return (
@@ -285,7 +283,7 @@ class FuncDecl(AST):
         self.func_scope: symbols.Scope = symbols.PhonyScope()
 
     def pprint(self, indent: str):
-        print(indent + "FuncDecl")
+        print(indent + f"FuncDecl [{self.func_scope}]")
         self.id.pprint(indent + i4)
         for param in self.params:
             param.pprint(indent + i4)
@@ -294,7 +292,7 @@ class FuncDecl(AST):
         self.body.pprint(indent + i4)
 
     def __repr__(self):
-        return f"FuncDecl({self.id}, {self.params}, {self.ret_type_ast}, {self.body})"
+        return f"FuncDecl({self.id}, {self.params}, {self.ret_type_ast}, {self.body}, {self.func_scope})"
 
     def compare(self, other: AST, fn: Callable[[AST, AST], bool]) -> bool:
         return (
