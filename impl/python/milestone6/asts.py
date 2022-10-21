@@ -232,7 +232,9 @@ class CompoundStmt(Stmt):
         self.local_scope: symbols.Scope = symbols.PhonyScope()
 
     def pprint(self, indent: str):
-        print(indent + f"CompoundStmt [{self.local_scope}]")
+        ret_type = self.return_stmt.expr.semantic_type if self.return_stmt and \
+            self.return_stmt.expr else symbols.VoidType()
+        print(indent + f"CompoundStmt [{self.local_scope}]>{ret_type}")
         for decl in self.decls:
             decl.pprint(indent + i4)
         for stmt in self.stmts:
@@ -327,7 +329,7 @@ class CallExpr(Expr):
         self.coord: Coord = coord
 
     def pprint(self, indent: str):
-        print(indent + "CallExpr")
+        print(indent + f"CallExpr->{self.semantic_type}")
         self.fn.pprint(indent + i4)
         for arg in self.args:
             arg.pprint(indent + i4)
@@ -455,7 +457,8 @@ class ReturnStmt(Stmt):
         self.enclosing_scope: symbols.Scope = symbols.PhonyScope()
 
     def pprint(self, indent: str):
-        print(indent + "ReturnStmt")
+        semtype = symbols.VoidType() if not self.expr else self.expr.semantic_type
+        print(indent + f"ReturnStmt -> {semtype}")
         if self.expr is not None:
             self.expr.pprint(indent + i4)
 
@@ -484,7 +487,7 @@ class BinaryOp(Expr):
         self.right: Expr = right
 
     def pprint(self, indent: str):
-        print(indent + f"BinaryOp({self.op})")
+        print(indent + f"BinaryOp({self.op}) ->{self.semantic_type}")
         self.left.pprint(indent + i4)
         self.right.pprint(indent + i4)
 
@@ -511,7 +514,7 @@ class UnaryOp(Expr):
         self.expr.pprint(indent + i4)
 
     def __repr__(self):
-        return f"UnaryOp({self.op}, {self.expr})"
+        return f"UnaryOp({self.op}, {self.expr} ->{self.semantic_type})"
 
     def compare(self, other: AST, fn: Callable[[AST, AST], bool]) -> bool:
         return (
@@ -529,7 +532,7 @@ class ArrayCell(Expr):
         self.coord: Coord = coord
 
     def pprint(self, indent: str):
-        print(indent + "ArrayCell")
+        print(indent + f"ArrayCell -> {self.semantic_type}")
         self.arr.pprint(indent + i4)
         self.idx.pprint(indent + i4)
 
@@ -604,11 +607,11 @@ class IdExpr(Expr):
         self.id = id
 
     def pprint(self, indent: str):
-        print(indent + f"IdExpr")
+        print(indent + f"IdExpr->{self.semantic_type}")
         self.id.pprint(indent + i4)
 
     def __repr__(self):
-        return f"IdExpr({self.id})"
+        return f"IdExpr({self.id}: {self.semantic_type})"
 
     def compare(self, other: AST, fn: Callable[[AST, AST], bool]) -> bool:
         return (

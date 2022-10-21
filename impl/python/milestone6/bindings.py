@@ -1,5 +1,6 @@
 # General idea: for each type of token, we return the unbounded IdSymbol
 # The tokens that owns some scope will then resolve it to the symbolic table.
+from os import wait
 import asts
 import error
 import symbols
@@ -149,13 +150,12 @@ def _AssignStmt(ast: asts.AssignStmt):
 def _BinaryOp(ast: asts.BinaryOp):
     symbs = _Expr(ast.left)
     symbs.extend(_Expr(ast.right))
-    if ast.op.kind in {'<=', '==', '!=', '>=', '<', '>'}:
+    if ast.op.kind in {'<=', '==', '!=', '>=', '<', '>', 'and', 'or'}:
         ast.semantic_type = symbols.BoolType()
     elif ast.op.kind in {'+', '-', '*', '/'}:
         ast.semantic_type = symbols.IntType()
     else:
         error.error(f"BinaryOp: Unexpected op: {ast.op.kind}", ast.op.coord)
-    ast.semantic_type = ast.left.semantic_type
     return symbs
 
 

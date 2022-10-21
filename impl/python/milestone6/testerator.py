@@ -18,6 +18,7 @@ def compile(input: str):
     psr = parser.Parser(lexer)
     tree: asts.Program = psr.program()
     bindings.program(tree)
+    # print(f"Tree after bindings: {tree}")
     typecheck.program(tree)
     return tree
 
@@ -31,13 +32,13 @@ def test_typecheck(student: asts.AST, expected: asts.AST):
 
 
 def print_test(test, retval, out, err):
-    print(f"input: {test['input']}")
-    print(f"expected return value: {test['output']}")
-    print(f"actual return value: {retval}")
-    print(f"expected stdout: {test['stdout']}")
-    print(f"stdout: {out.getvalue()}")
-    print(f"expected stderr: {test['stderr']}")
-    print(f"stderr: {err.getvalue()}")
+    print(f"=== input ===\n{test['input']}")
+    print(f"=== expected return value ===\n{test['output']}")
+    print(f"=== actual return value ===\n{retval}")
+    print(f"=== expected stdout ===\n{test['stdout']}")
+    print(f"=== stdout ===\n{out.getvalue()}")
+    print(f"=== expected stderr ===\n{test['stderr']}")
+    print(f"=== stderr ===\n{err.getvalue()}")
 
 
 def run(inputs: list[str], verbose) -> tuple[int, int]:
@@ -63,6 +64,7 @@ def run(inputs: list[str], verbose) -> tuple[int, int]:
                 or out.getvalue() != test["stdout"]
                 or err.getvalue() != test["stderr"]
             ):
+                print("===== Failed =====")
                 print_test(test, student, out, err)
                 print("---")
             else:
