@@ -66,6 +66,8 @@ def run(inputs: list[str], verbose) -> tuple[int, int]:
                 print_test(test, student, out, err)
                 print("---")
             else:
+                print_test(test, student, out, err)
+                print("---")
                 correct += 1
         total += len(tests)
     print(f"{correct} / {total} correct")

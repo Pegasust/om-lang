@@ -17,10 +17,14 @@ def _Program(ast: asts.Program):
     global_scope = symbols.GlobalScope()
     for decl in ast.decls:
         decl.func_scope = symbols.FuncScope(global_scope)
-        (func_symb, unscoped) = _FuncDecl(decl)
+        (_func_symb, unscoped) = _FuncDecl(decl)
+        func_symb = _func_symb.id.symbol
+        assert isinstance(func_symb, symbols.IdSymbol)
         func_symb.scope = global_scope
         global_scope.symtab[func_symb.name] = func_symb
-        for symb in unscoped:
+        for symb_id in unscoped:
+            symb = symb_id.symbol
+            assert isinstance(symb, symbols.IdSymbol)
             func_symb = global_scope.lookup(symb.name)
             if not func_symb:
                 # warning?
@@ -28,9 +32,10 @@ def _Program(ast: asts.Program):
                 continue
             symb.set_type(func_symb.get_type())
             symb.scope = global_scope
+            symb_id.semantic_type = symb.get_type()
 
 
-def _Stmt(ast: asts.Stmt) -> list[symbols.IdSymbol]:
+def _Stmt(ast: asts.Stmt):
     if isinstance(ast, asts.AssignStmt):
         return _AssignStmt(ast)
     elif isinstance(ast, asts.IfStmt):
@@ -49,8 +54,8 @@ def _Stmt(ast: asts.Stmt) -> list[symbols.IdSymbol]:
         assert False, f"_Stmt() not implemented for {ast}"
 
 
-def _Expr(ast: asts.Expr) -> list[symbols.IdSymbol]:
-    retval: list[symbols.IdSymbol] = []
+def _Expr(ast: asts.Expr):
+    retval: list[asts.Id] = []
     if isinstance(ast, asts.BinaryOp):
         retval.extend(_BinaryOp(ast))
     elif isinstance(ast, asts.UnaryOp):
@@ -86,14 +91,21 @@ def _Type(ast: asts.Type):
 def _VarDecl(ast: asts.VarDecl):
     id_symb = _Id(ast.id)
     var_type = _Type(ast.type_ast)
-    id_symb.set_type(var_type)
-    return id_symb
+    id_symb.semantic_type = var_type
+    id_symb.symbol.set_type(var_type)
+    # TODO: Might want to change this to VoidType
+    ast.semantic_type = var_type
+    return ast
 
 
 def _ParamDecl(ast: asts.ParamDecl):
     id_symb = _Id(ast.id)
-    id_symb.set_type(_Type(ast.type_ast))
-    return id_symb
+    id_symb.semantic_type = _Type(ast.type_ast)
+    id_symb.symbol.set_type(id_symb.semantic_type)
+    ast.id.semantic_type = id_symb.semantic_type
+    # TODO: Might want to change this to VoidType
+    ast.semantic_type = ast.id.semantic_type
+    return ast
 
 
 def _IntType(ast: asts.IntType):
@@ -119,15 +131,14 @@ def _CallExpr(ast: asts.CallExpr):
     symbs = _Expr(ast.fn)
     for arg in ast.args:
         symbs.extend(_Expr(arg))
+    ast.semantic_type = ast.fn.semantic_type
     return symbs
 
 
 def _Id(ast: asts.Id):
     ast.symbol = symbols.IdSymbol(ast.token.value, symbols.PhonyScope())
     ast.symbol.name = ast.token.value
-    return ast.symbol
-
-
+    return ast
 
 def _AssignStmt(ast: asts.AssignStmt):
     symbs = _Expr(ast.lhs)
@@ -138,15 +149,25 @@ def _AssignStmt(ast: asts.AssignStmt):
 def _BinaryOp(ast: asts.BinaryOp):
     symbs = _Expr(ast.left)
     symbs.extend(_Expr(ast.right))
+    if ast.op.kind in {'<=', '==', '!=', '>=', '<', '>'}:
+        ast.semantic_type = symbols.BoolType()
+    elif ast.op.kind in {'+', '-', '*', '/'}:
+        ast.semantic_type = symbols.IntType()
+    else:
+        error.error(f"BinaryOp: Unexpected op: {ast.op.kind}", ast.op.coord)
+    ast.semantic_type = ast.left.semantic_type
     return symbs
 
 
 def _UnaryOp(ast: asts.UnaryOp):
-    return _Expr(ast.expr)
+    symbs = _Expr(ast.expr)
+    ast.semantic_type = ast.expr.semantic_type
+    return symbs
 
 
 def _PrintStmt(ast: asts.PrintStmt):
-    return _Expr(ast.expr)
+    symbs = _Expr(ast.expr)
+    return symbs
 
 
 def _IfStmt(ast: asts.IfStmt):
@@ -171,19 +192,36 @@ def _CompoundStmt(ast: asts.CompoundStmt):
     local_scope = ast.local_scope
 
     for decl in ast.decls:
-        decl_id_symb = _VarDecl(decl)
+        _decl = _VarDecl(decl)
+        decl_id_symb = _decl.id.symbol
+        assert isinstance(decl_id_symb, symbols.IdSymbol)
         if decl_id_symb.name in local_scope.symtab.keys():
             error.error(f"Var \"{decl_id_symb.name}\" declared more than once",
                         decl.id.token.coord)
         local_scope.symtab[decl_id_symb.name] = decl_id_symb
         decl_id_symb.scope = local_scope
 
-    unscoped_symbs: list[symbols.IdSymbol] = []
+    unscoped_symbs: list[asts.Id] = []
     for stmt in ast.stmts:
         # how to handle compound statements?
         # TODO: Add more nodes that may create new scopes here!
-        if isinstance(stmt, asts.CompoundStmt):
+        if isinstance(stmt, asts.AssignStmt):
+            pass
+        elif isinstance(stmt, asts.IfStmt):
+            stmt.thenStmt.local_scope = symbols.LocalScope(local_scope)
+            if stmt.elseStmt:
+                stmt.elseStmt.local_scope = symbols.LocalScope(local_scope)
+        elif isinstance(stmt, asts.WhileStmt):
+            stmt.stmt.local_scope = symbols.LocalScope(local_scope)
+        elif isinstance(stmt, asts.CallStmt):
+            pass
+        elif isinstance(stmt, asts.CompoundStmt):
             stmt.local_scope = symbols.LocalScope(local_scope)
+        elif isinstance(stmt, asts.PrintStmt):
+            pass
+        elif isinstance(stmt, asts.ReturnStmt):
+            pass
+
         unscoped_symbs.extend(_Stmt(stmt))
 
     if ast.return_stmt is not None:
@@ -191,12 +229,14 @@ def _CompoundStmt(ast: asts.CompoundStmt):
         unscoped_symbs.extend(_Stmt(ast.return_stmt))
 
     # drain filter would be ideal here
-    _unscoped: list[symbols.IdSymbol] = []
-    for symb in unscoped_symbs:
+    _unscoped = list(unscoped_symbs) * 0 # borrow type with empty list
+    for id in unscoped_symbs:
+        symb = id.symbol
+        assert isinstance(symb, symbols.IdSymbol)
         decl = local_scope.lookup(symb.name)
         # print(f"{symb=}, {decl=}")
         if not decl:
-            _unscoped.append(symb)
+            _unscoped.append(id)
             continue
         if not isinstance(decl, symbols.IdSymbol):
             # print(f"WARNING: {decl} is not IdSymbol")
@@ -204,6 +244,7 @@ def _CompoundStmt(ast: asts.CompoundStmt):
 
         symb.set_type(decl.get_type())
         symb.scope = decl.scope
+        id.semantic_type = symb.get_type()
 
     return _unscoped # Since we have processed all unscoped symbols
 
@@ -213,7 +254,9 @@ def _FuncDecl(ast: asts.FuncDecl):
     func_scope = ast.func_scope
 
     param_symbs = [_ParamDecl(param) for param in ast.params]
-    for param, param_symb in zip(ast.params,param_symbs):
+    for param in ast.params:
+        param_symb = param.id.symbol
+        assert isinstance(param_symb, symbols.IdSymbol)
         if param_symb.name in func_scope.symtab.keys():
             error.error(
                 f"Param \"{param_symb.name}\" declared more than once",
@@ -226,14 +269,18 @@ def _FuncDecl(ast: asts.FuncDecl):
     if ast.ret_type_ast is not None:
         ret_type = _Type(ast.ret_type_ast)
     # assign function type of this function
-    id_symb.set_type(
-        symbols.FuncType([p.get_type() for p in param_symbs], ret_type)
+    id_symb.symbol.set_type(
+        symbols.FuncType([p.id.symbol.get_type() for p in param_symbs], ret_type)
     )
+    ast.func_scope.set_return_type(id_symb.symbol.get_type())
+    func_scope.set_return_type(ret_type)
 
     # parse the statements within the function
     ast.body.local_scope = symbols.LocalScope(func_scope)
     unscoped_symbs = _CompoundStmt(ast.body)
-    return (id_symb, unscoped_symbs)
+    ast.id.semantic_type = func_scope.get_return_type()
+    
+    return (ast, unscoped_symbs)
 
 
 def _ReturnStmt(ast: asts.ReturnStmt):
@@ -249,12 +296,15 @@ def _ArrayCell(ast: asts.ArrayCell):
 
 
 def _IntLiteral(_ast: asts.IntLiteral):
+    _ast.semantic_type = symbols.IntType()
     pass
 
 
 def _TrueLiteral(_ast: asts.TrueLiteral):
+    _ast.semantic_type = symbols.BoolType()
     pass
 
 
 def _FalseLiteral(_ast: asts.FalseLiteral):
+    _ast.semantic_type = symbols.BoolType()
     pass

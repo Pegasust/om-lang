@@ -150,7 +150,7 @@ def _AssignStmt(ast: asts.AssignStmt):
 def _BinaryOp(ast: asts.BinaryOp):
     symbs = _Expr(ast.left)
     symbs.extend(_Expr(ast.right))
-    if ast.op.kind in {'<=', '==', '!=', '>=', '<', '>'}:
+    if ast.op.kind in {'<=', '==', '!=', '>=', '<', '>', 'and', 'or'}:
         ast.semantic_type = symbols.BoolType()
     elif ast.op.kind in {'+', '-', '*', '/'}:
         ast.semantic_type = symbols.IntType()
