@@ -17,7 +17,7 @@ def _Program(ast: asts.Program):
 
 
 def _VarDecl(ast: asts.VarDecl):
-    # assert not isinstance(ast.semantic_type, symbols.PhonyType)
+    assert not isinstance(ast.semantic_type, symbols.PhonyType)
     _Id(ast.id)
     _Type(ast.type_ast)
     ast.id.semantic_type = ast.type_ast.semantic_type
@@ -25,19 +25,17 @@ def _VarDecl(ast: asts.VarDecl):
 
 
 def _ParamDecl(ast: asts.ParamDecl):
-    # assert not isinstance(ast.semantic_type, symbols.PhonyType)
+    assert not isinstance(ast.semantic_type, symbols.PhonyType)
     _Id(ast.id)
     _Type(ast.type_ast)
     ast.id.semantic_type = ast.type_ast.semantic_type
 
 
 def _IntType(ast: asts.IntType):
-    ast.semantic_type = symbols.IntType()
     return ast
 
 
 def _BoolType(ast: asts.BoolType):
-    ast.semantic_type = symbols.BoolType()
     return ast
 
 
@@ -47,16 +45,15 @@ def _ArrayType(ast: asts.ArrayType):
     if ast.size is not None:
         _Expr(ast.size)
         # TODO: # assert that the size_expr resolves to integral value
-        if not isinstance(ast.size.semantic_type, symbols.IntType):
-            # warning
-            print(f"array size ({ast.size})'s semantic_type is not IntType")
+        assert isinstance(ast.size.semantic_type, symbols.IntType), \
+            f"array size ({ast.size})'s semantic_type is not IntType"
     return ast
 
 
 def _IdExpr(ast: asts.IdExpr):
     _Id(ast.id)
     ast.semantic_type = ast.id.semantic_type
-    return ast
+    return ast.semantic_type
 
 
 
@@ -67,7 +64,6 @@ def _CallExpr(ast: asts.CallExpr):
                         "is not FuncType", ast.coord)
     for i, (expect, arg) in enumerate(zip(ast.fn.semantic_type.params, ast.args)):
         _Expr(arg)
-        # TODO: Add arg type check for non literal type using symbol table
         if expect != arg.semantic_type:
             error.error(f"Positional arg {i}: expect {expect}, got {arg.semantic_type}",
                         ast.coord)
@@ -75,18 +71,19 @@ def _CallExpr(ast: asts.CallExpr):
         error.error(f"Expect call expr but type ({ast.fn.semantic_type}) "+
                         "is not FuncType", ast.coord)
     ast.semantic_type = ast.fn.semantic_type.ret
+    return ast.semantic_type
 
 
 def _Id(ast: asts.Id):
-    # assert not isinstance(ast.symbol, symbols.PhonySymbol)
-    # assert not isinstance(ast.semantic_type, symbols.PhonyType)
+    assert not isinstance(ast.symbol, symbols.PhonySymbol)
+    assert not isinstance(ast.semantic_type, symbols.PhonyType)
     return ast
 
 
 def _AssignStmt(ast: asts.AssignStmt):
     _Expr(ast.lhs)
     _Expr(ast.rhs)
-    return ast
+    return None
 
 
 def _BinaryOp(ast: asts.BinaryOp):
@@ -105,13 +102,13 @@ def _BinaryOp(ast: asts.BinaryOp):
         assert(isinstance(ast.left.semantic_type, symbols.BoolType))
     else:
         error.error(f"BinaryOp: Unexpected op: {ast.op.kind}", ast.op.coord)
-    return ast
+    return ast.semantic_type
 
 
 def _UnaryOp(ast: asts.UnaryOp):
     _Expr(ast.expr)
     ast.semantic_type = ast.expr.semantic_type
-    return ast
+    return ast.semantic_type
 
 
 def _PrintStmt(ast: asts.PrintStmt):
@@ -127,12 +124,15 @@ def _IfStmt(ast: asts.IfStmt):
         semtype = ast.expr.semantic_type
         error.error(f"If expr: semantic_type ({semtype}) not bool", ast.coord)
 
-    _CompoundStmt(ast.thenStmt)
+    return_types: list[symbols.Type] = []
+    then_types = _CompoundStmt(ast.thenStmt)
+    return_types.extend(then_types)
 
     if ast.elseStmt is not None:
-        _CompoundStmt(ast.elseStmt)
+        else_types = _CompoundStmt(ast.elseStmt)
+        return_types.extend(else_types)
 
-    return ast
+    return return_types
 
 
 def _WhileStmt(ast: asts.WhileStmt):
@@ -142,9 +142,9 @@ def _WhileStmt(ast: asts.WhileStmt):
         # TODO: Warning
         semtype = ast.expr.semantic_type
         error.error(f"while expr: semantic_type ({semtype}) not bool", ast.coord)
-    _CompoundStmt(ast.stmt)
+    return_types = _CompoundStmt(ast.stmt)
 
-    return ast
+    return return_types
 
 
 def _CallStmt(ast: asts.CallStmt):
@@ -156,11 +156,16 @@ def _CompoundStmt(ast: asts.CompoundStmt):
     # assert not isinstance(ast.local_scope, symbols.PhonyScope)
     for decl in ast.decls:
         _VarDecl(decl)
+    proposed_returns: list[symbols.Type] = []
     for stmt in ast.stmts:
-        _Stmt(stmt)
+        proposed_returns.extend(_Stmt(stmt))
     if ast.return_stmt is not None:
         assert not isinstance(ast.return_stmt.enclosing_scope, symbols.PhonyScope)
-        _Stmt(ast.return_stmt)
+        proposed_returns.extend(_Stmt(ast.return_stmt))
+    assert all([proposed_returns[i] == proposed_returns[i-1] 
+                   for i,_ in enumerate(proposed_returns) if i > 0]),\
+           f"All return types ({proposed_returns}) not uniform"
+    return proposed_returns
 
 
 def _FuncDecl(ast: asts.FuncDecl):
@@ -177,10 +182,8 @@ def _FuncDecl(ast: asts.FuncDecl):
         decl_ret_type = ast.ret_type_ast.semantic_type
 
     # Actual return value
-    _CompoundStmt(ast.body)
-    ret_type = symbols.VoidType()
-    if ast.body.return_stmt and ast.body.return_stmt.expr:
-        ret_type = ast.body.return_stmt.expr.semantic_type
+    ret_types = _CompoundStmt(ast.body)
+    ret_type = symbols.VoidType() if len(ret_types) == 0 else ret_types[0]
 
     if ret_type != decl_ret_type:
         # warning instead
@@ -189,7 +192,7 @@ def _FuncDecl(ast: asts.FuncDecl):
         message = (f"Function \"{ast.id.token.value}\": "+\
                         f"Expect {decl_ret_type} but returns {ret_type}", 
                     coord)
-        print(*message)
+        error.error(*message)
     # ast.func_scope.set_return_type(ret_type)
     return ast
 
@@ -197,7 +200,7 @@ def _FuncDecl(ast: asts.FuncDecl):
 def _ReturnStmt(ast: asts.ReturnStmt):
     # assert not isinstance(ast.enclosing_scope, symbols.PhonyScope)
     if ast.expr is not None:
-        _Expr(ast.expr)
+        return _Expr(ast.expr)
 
 
 def _ArrayCell(ast: asts.ArrayCell):
@@ -212,40 +215,46 @@ def _ArrayCell(ast: asts.ArrayCell):
         semtype = ast.idx.semantic_type 
         error.error(f"Array access semantic_type ({semtype}) is not int",
                     ast.coord)
-    return ast
+    return ast.semantic_type
     
 
 
 def _IntLiteral(ast: asts.IntLiteral):
-    pass
+    assert isinstance(ast.semantic_type, symbols.IntType)
+    return ast.semantic_type
 
 
 def _TrueLiteral(ast: asts.TrueLiteral):
-    pass
+    assert isinstance(ast.semantic_type, symbols.BoolType)
+    return ast.semantic_type
 
 
 def _FalseLiteral(ast: asts.FalseLiteral):
-    pass
+    assert isinstance(ast.semantic_type, symbols.BoolType)
+    return ast.semantic_type
     
     
 def _Stmt(ast: asts.Stmt):
     if isinstance(ast, asts.AssignStmt):
         _AssignStmt(ast)
+        return []
     elif isinstance(ast, asts.IfStmt):
-        _IfStmt(ast)
+        return _IfStmt(ast)
     elif isinstance(ast, asts.WhileStmt):
-        _WhileStmt(ast)
+        return _WhileStmt(ast)
     elif isinstance(ast, asts.CallStmt):
         _CallStmt(ast)
+        return []
     elif isinstance(ast, asts.CompoundStmt):
-        _CompoundStmt(ast)
+        return _CompoundStmt(ast)
     elif isinstance(ast, asts.PrintStmt):
         _PrintStmt(ast)
+        return []
     elif isinstance(ast, asts.ReturnStmt):
-        _ReturnStmt(ast)
+        ret = _ReturnStmt(ast) 
+        return [] if not ret else [ret]
     else:
-        # assert False, f"_Stmt() not implemented for {type(ast)}"
-        pass
+        assert False, f"_Stmt() not implemented for {type(ast)}"
 
 
 def _Expr(ast: asts.Expr):
@@ -267,12 +276,12 @@ def _Expr(ast: asts.Expr):
     elif isinstance(ast, asts.FalseLiteral):
         return _FalseLiteral(ast)
     else:
-        # assert False, f"_Expr() not implemented for {type(ast)}"
+        assert False, f"_Expr() not implemented for {type(ast)}"
         pass
 
 
 def _Type(ast: asts.Type):
-    # assert not isinstance(ast.semantic_type, symbols.PhonyType)
+    assert not isinstance(ast.semantic_type, symbols.PhonyType)
     if isinstance(ast, asts.IntType):
         return _IntType(ast)
     elif isinstance(ast, asts.BoolType):
@@ -280,7 +289,7 @@ def _Type(ast: asts.Type):
     elif isinstance(ast, asts.ArrayType):
         return _ArrayType(ast)
     else:
-        # assert False, f"_Type() not implemented for {type(ast)}"
+        assert False, f"_Type() not implemented for {type(ast)}"
         pass
 
 

@@ -110,22 +110,27 @@ def _ParamDecl(ast: asts.ParamDecl):
 
 
 def _IntType(ast: asts.IntType):
-    return symbols.IntType()
+    ast.semantic_type = symbols.IntType()
+    return ast.semantic_type
 
 
 def _BoolType(ast: asts.BoolType):
-    return symbols.BoolType()
+    ast.semantic_type = symbols.BoolType()
+    return ast.semantic_type
 
 
 def _ArrayType(ast: asts.ArrayType):
     elem_type = _Type(ast.element_type_ast)
     if ast.size is not None:
         _Expr(ast.size)
-    return symbols.ArrayType(elem_type)
+    ast.semantic_type = symbols.ArrayType(elem_type)
+    return ast.semantic_type
 
 
 def _IdExpr(ast: asts.IdExpr):
-    return [_Id(ast.id)]
+    symbs = [_Id(ast.id)]
+    ast.semantic_type = ast.id.semantic_type
+    return symbs
 
 
 def _CallExpr(ast: asts.CallExpr):
@@ -292,6 +297,9 @@ def _ReturnStmt(ast: asts.ReturnStmt):
 def _ArrayCell(ast: asts.ArrayCell):
     symbs = _Expr(ast.arr)
     symbs.extend(_Expr(ast.idx))
+    arr_semtype = ast.arr.semantic_type
+    # This is to be propagated by typechecker.
+    # ast.semantic_type = ast.arr.semantic_type
     return symbs
 
 

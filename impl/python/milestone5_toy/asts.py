@@ -71,7 +71,7 @@ class Id(AST):
         self.semantic_type: symbols.Type = symbols.PhonyType()
 
     def pprint(self, indent: str):
-        print(indent + f"Id({self.token}, {self.semantic_type})")
+        print(indent + f"Id({self.token}")
 
     def __repr__(self):
         return f"Id({self.token.__repr__()}, {self.symbol}, {self.semantic_type})"
@@ -94,7 +94,7 @@ class VarDecl(Decl):
         self.type_ast: Type = type
 
     def pprint(self, indent: str):
-        print(indent + f"VarDecl {self.semantic_type}")
+        print(indent + "VarDecl")
         self.id.pprint(indent + i4)
         self.type_ast.pprint(indent + i4)
 
@@ -116,7 +116,7 @@ class ParamDecl(Decl):
         self.type_ast: Type = type
 
     def pprint(self, indent: str):
-        print(indent + f"ParamDecl {self.semantic_type}")
+        print(indent + "ParamDecl")
         self.id.pprint(indent + i4)
         self.type_ast.pprint(indent + i4)
 
@@ -232,9 +232,7 @@ class CompoundStmt(Stmt):
         self.local_scope: symbols.Scope = symbols.PhonyScope()
 
     def pprint(self, indent: str):
-        ret_type = self.return_stmt.expr.semantic_type if self.return_stmt and \
-            self.return_stmt.expr else symbols.VoidType()
-        print(indent + f"CompoundStmt [{self.local_scope}]>{ret_type}")
+        print(indent + "CompoundStmt")
         for decl in self.decls:
             decl.pprint(indent + i4)
         for stmt in self.stmts:
@@ -285,7 +283,7 @@ class FuncDecl(AST):
         self.func_scope: symbols.Scope = symbols.PhonyScope()
 
     def pprint(self, indent: str):
-        print(indent + f"FuncDecl [{self.func_scope}]")
+        print(indent + "FuncDecl")
         self.id.pprint(indent + i4)
         for param in self.params:
             param.pprint(indent + i4)
@@ -329,7 +327,7 @@ class CallExpr(Expr):
         self.coord: Coord = coord
 
     def pprint(self, indent: str):
-        print(indent + f"CallExpr->{self.semantic_type}")
+        print(indent + "CallExpr")
         self.fn.pprint(indent + i4)
         for arg in self.args:
             arg.pprint(indent + i4)
@@ -457,8 +455,7 @@ class ReturnStmt(Stmt):
         self.enclosing_scope: symbols.Scope = symbols.PhonyScope()
 
     def pprint(self, indent: str):
-        semtype = symbols.VoidType() if not self.expr else self.expr.semantic_type
-        print(indent + f"ReturnStmt -> {semtype}")
+        print(indent + "ReturnStmt")
         if self.expr is not None:
             self.expr.pprint(indent + i4)
 
@@ -487,7 +484,7 @@ class BinaryOp(Expr):
         self.right: Expr = right
 
     def pprint(self, indent: str):
-        print(indent + f"BinaryOp({self.op}) ->{self.semantic_type}")
+        print(indent + f"BinaryOp({self.op})")
         self.left.pprint(indent + i4)
         self.right.pprint(indent + i4)
 
@@ -510,11 +507,11 @@ class UnaryOp(Expr):
         self.expr: Expr = expr
 
     def pprint(self, indent: str):
-        print(indent + f"UnaryOp({self.op}) -> {self.semantic_type}")
+        print(indent + f"UnaryOp({self.op})")
         self.expr.pprint(indent + i4)
 
     def __repr__(self):
-        return f"UnaryOp({self.op}, {self.expr} ->{self.semantic_type})"
+        return f"UnaryOp({self.op}, {self.expr})"
 
     def compare(self, other: AST, fn: Callable[[AST, AST], bool]) -> bool:
         return (
@@ -532,7 +529,7 @@ class ArrayCell(Expr):
         self.coord: Coord = coord
 
     def pprint(self, indent: str):
-        print(indent + f"ArrayCell -> {self.semantic_type}")
+        print(indent + "ArrayCell")
         self.arr.pprint(indent + i4)
         self.idx.pprint(indent + i4)
 
@@ -553,7 +550,7 @@ class IntLiteral(Expr):
         self.token: Token = token
 
     def pprint(self, indent: str):
-        print(indent + f"IntLiteral({self.token}) -> {self.semantic_type}")
+        print(indent + f"IntLiteral({self.token})")
 
     def __repr__(self):
         return f"IntLiteral({self.token.__repr__()})"
@@ -571,7 +568,7 @@ class TrueLiteral(Expr):
         self.token: Token = token
 
     def pprint(self, indent: str):
-        print(indent + f"TrueLiteral -> {self.semantic_type}")
+        print(indent + "TrueLiteral")
 
     def __repr__(self):
         return f"TrueLiteral({self.token.__repr__()})"
@@ -589,7 +586,7 @@ class FalseLiteral(Expr):
         self.token: Token = token
 
     def pprint(self, indent: str):
-        print(indent + f"FalseLiteral -> {self.semantic_type}")
+        print(indent + "FalseLiteral")
 
     def __repr__(self):
         return f"FalseLiteral({self.token.__repr__()})"
@@ -607,11 +604,11 @@ class IdExpr(Expr):
         self.id = id
 
     def pprint(self, indent: str):
-        print(indent + f"IdExpr->{self.semantic_type}")
+        print(indent + f"IdExpr")
         self.id.pprint(indent + i4)
 
     def __repr__(self):
-        return f"IdExpr({self.id}: {self.semantic_type})"
+        return f"IdExpr({self.id})"
 
     def compare(self, other: AST, fn: Callable[[AST, AST], bool]) -> bool:
         return (
