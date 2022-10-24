@@ -40,10 +40,10 @@ class Scanner:
     def __init__(self, input: str):
         """Create a new scanner for the given input string."""
         # constexpr values from specs
-        self.punc_map: Dict[str, list[str]] = dict()
+        self.punc_first_chr: Dict[str, list[str]] = dict()
         # print(f"Input: \"\"\"{input}\"\"\";")
         for punc in punctuation:
-            self.punc_map.setdefault(punc[0], []).append(punc)
+            self.punc_first_chr.setdefault(punc[0], []).append(punc)
 
         self.tokens = self._parse_tokens(input)
         # tok_str = "\n".join([f"Token('{tok.kind}','{tok.value} @ {tok.coord}')" for tok in self.tokens])
@@ -90,9 +90,9 @@ class Scanner:
                 kind: Callable[[str], str] = \
                     lambda s: s if s in keywords else "ID"
                 token_res = span_token(kind, lambda idx, s: Result.ok(s.isalnum() or s in '_'))
-            elif start_char in self.punc_map:
-                match = {v for v in self.punc_map[start_char] if len(v) == 1}
-                possible = {v for v in self.punc_map[start_char]} - match
+            elif start_char in self.punc_first_chr:
+                match = {v for v in self.punc_first_chr[start_char] if len(v) == 1}
+                possible = {v for v in self.punc_first_chr[start_char]} - match
                 end_idx = tok_start_idx + 1
                 while end_idx < len(line):
                     s = line[end_idx]

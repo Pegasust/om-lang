@@ -1,5 +1,7 @@
 //! Repersents the tokens of Omega language
 
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 /// Represents the coordinates of a given token
@@ -27,7 +29,14 @@ pub struct Token {
     coord: Coord,
 }
 
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Token(kind={:?}, lex=\"{}\", @={:?})", self.kind, self.string_value, self.coord)
+    }
+}
+
 // #[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
+/// Bookkeeping structure for Punctuation.
 pub struct PunctuationBookkeep;
 // #[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct KeywordBookkeep;
