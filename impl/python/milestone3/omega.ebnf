@@ -1,0 +1,82 @@
+program  :
+     { func_decl } .
+
+var_decl :
+    "var" ID ":" type .
+
+func_decl :
+    "func" ID "(" [ ID ":" type { "," ID ":" type } ] ")" [ ":" type ] compound_stmt .
+
+type :
+    "[" [ expr ] "]" type | "int" | "bool" .
+
+assign_stmt :
+    designator "=" expr .
+
+compound_stmt :
+    "{" { var_decl } { statement } [ return_stmt ] "}" .
+
+while_stmt :
+    "while" expr compound_stmt .
+
+if_stmt :
+    "if" expr compound_stmt [ "else" compound_stmt ] .
+
+call_stmt :
+    "call" call .
+
+call :  
+    ID "(" [ expr { "," expr } ] ")" .
+
+return_stmt :
+    "return" [ expr ] .
+
+print_stmt :
+    "print" expr .
+
+statement :
+    assign_stmt
+    | while_stmt
+    | if_stmt
+    | call_stmt
+    | compound_stmt
+    | print_stmt
+    .
+
+relation : "<" | "<=" | ">" | ">=" | "==" | "!=" .
+
+addop : "+" | "-" .
+
+mulop : "*" | "/" .
+
+expr :
+    and_bool_expr { "or" and_bool_expr } .
+
+and_bool_expr :
+    relation_expr { "and" relation_expr } .
+
+relation_expr :
+    add_expr [ relation add_expr ] .
+
+add_expr :
+    mult_expr { addop mult_expr } .
+
+mult_expr :
+    unary_expr { mulop unary_expr } .
+
+unary_expr :
+    "(" expr ")"
+    | integral_literal
+    | "-" unary_expr
+    | designator
+    .
+
+integral_literal : INT | "true" | "false" .
+
+designator :
+    ID [ arguments ] { selector } .
+
+arguments : "("  [ expr { "," expr }  ]  ")" .
+
+selector :
+    "[" expr "]" .
