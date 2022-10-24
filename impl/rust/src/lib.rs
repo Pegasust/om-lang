@@ -5,4 +5,5 @@ pub mod scanner;
 pub mod parser;
 pub mod typecheck;
 pub mod ast;
+pub mod stdx;
 
