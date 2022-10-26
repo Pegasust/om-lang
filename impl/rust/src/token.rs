@@ -2,13 +2,14 @@
 
 use std::fmt;
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 /// Represents the coordinates of a given token
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Coord {
-    col: u32,
-    line: u32,
+    pub(crate) col: u32,
+    pub(crate) line: u32,
 }
 
 /// Represents the type of the token
@@ -24,14 +25,18 @@ pub enum TokenType {
 /// Struct for a specific token
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Token {
-    kind: TokenType,
-    string_value: String,
-    coord: Coord,
+    pub(crate) kind: TokenType,
+    pub(crate) string_value: String,
+    pub(crate) coord: Coord,
 }
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Token(kind={:?}, lex=\"{}\", @={:?})", self.kind, self.string_value, self.coord)
+        write!(
+            f,
+            "Token(kind={:?}, lex=\"{}\", @={:?})",
+            self.kind, self.string_value, self.coord
+        )
     }
 }
 
@@ -48,15 +53,10 @@ impl IntoIterator for PunctuationBookkeep {
         let array = [
             // standard (23)
             // misc
-            ":", ",", "&", "[", "]", "{", "}", "(", ")", 
-            // arithmetics
-            "*", "/", "%", "+", "-", "=", 
-            // bitwise
-            "|", "&",
-            // comparisons
-            "<=", "<", ">", ">=", "==", "!=",
-
-            // extensions
+            ":", ",", "&", "[", "]", "{", "}", "(", ")", // arithmetics
+            "*", "/", "%", "+", "-", "=", // bitwise
+            "|", "&", // comparisons
+            "<=", "<", ">", ">=", "==", "!=", // extensions
             // bitwise
             "<<", ">>", "~",
         ];
@@ -72,22 +72,28 @@ impl IntoIterator for KeywordBookkeep {
         let array = [
             // standard (16)
             // boolean
-            "and", "or", "not",
-            // kw-literal
-            "true", "false",
-            // operations
-            "length", "call", "print", "return",
-            // symbolic
-            "var", "func",
-            // control
-            "while", "if", "else",
-            // primitive type
-            "bool", "int",
-
-            // extensions
+            "and", "or", "not", // kw-literal
+            "true", "false", // operations
+            "length", "call", "print", "return", // symbolic
+            "var", "func", // control
+            "while", "if", "else", // primitive type
+            "bool", "int", // extensions
             // primitive type
             "string",
         ];
         IntoIterator::into_iter(array)
     }
 }
+
+pub(crate) trait Bookkeep: IntoIterator<Item = &'static str> {
+    fn contains<'a>(&self, s: &'a str) -> bool {
+        self.into_iter().contains(&s)
+    }
+    fn match_first_char<'a>(&self, s: char) -> Option<Self::Item> {
+        self.into_iter()
+            .find(|bookkeep_str| bookkeep_str.chars().nth(0).map(|c| c == s).unwrap_or(false))
+    }
+}
+
+impl Bookkeep for PunctuationBookkeep{}
+impl Bookkeep for KeywordBookkeep{}
