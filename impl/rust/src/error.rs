@@ -7,13 +7,13 @@ use crate::token::Coord;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum OmegaError {
-    InvalidCharacter(InvalidCharacter)
+    InvalidCharacter(InvalidCharacter),
 }
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct InvalidCharacter {
-    chr: char,
-    coord: Coord,
-    context: String,
+    pub(crate) chr: char,
+    pub(crate) coord: Coord,
+    pub(crate) context: String,
 }
 
 impl Error for OmegaError {}

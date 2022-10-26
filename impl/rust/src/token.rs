@@ -1,8 +1,7 @@
 //! Repersents the tokens of Omega language
 
-use std::fmt;
+use std::{fmt, collections::HashSet, borrow::Borrow};
 
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 /// Represents the coordinates of a given token
@@ -85,13 +84,18 @@ impl IntoIterator for KeywordBookkeep {
     }
 }
 
-pub(crate) trait Bookkeep: IntoIterator<Item = &'static str> {
-    fn contains<'a>(&self, s: &'a str) -> bool {
-        self.into_iter().contains(&s)
+pub(crate) trait Bookkeep: IntoIterator<Item = &'static str> + Sized {
+    fn contains<'a>(self, s: &str) -> bool {
+        self.into_iter().any(|elem| elem.borrow() == s)
     }
-    fn match_first_char<'a>(&self, s: char) -> Option<Self::Item> {
+    fn match_first_char<'a>(self, s: char) -> HashSet<Self::Item> {
         self.into_iter()
-            .find(|bookkeep_str| bookkeep_str.chars().nth(0).map(|c| c == s).unwrap_or(false))
+            .fold(HashSet::new(), |mut so_far, bookkeep_str| {
+                if bookkeep_str.chars().nth(0).unwrap() == s {
+                    so_far.insert(bookkeep_str);
+                }
+                so_far
+            })
     }
 }
 

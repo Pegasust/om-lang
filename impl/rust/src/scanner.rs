@@ -1,11 +1,11 @@
 //! Scanner for Omega language, given some string input. This is an abstraction for string iterator
 //! and is intended to be used by the parser.
 
-use itertools::Itertools;
+use std::collections::HashSet;
 
 use crate::{
     error::{self, InvalidCharacter, OmegaError},
-    token::{Bookkeep, Coord, KeywordBookkeep, PunctuationBookkeep, Token, TokenType},
+    token::{Bookkeep, Coord, PunctuationBookkeep, Token, TokenType},
 };
 
 pub struct Scanner {
@@ -18,15 +18,24 @@ impl Scanner {
             raw_string: s.into(),
         }
     }
+    /// Creates an iterator through [Token]
+    pub fn iter(&self) -> impl Iterator<Item = error::Result<Token>> + '_ {
+        // I can't believe I just did it. Thanks for a lot of the references,
+        // itertools.
+        scanner(&self.raw_string)
+    }
 }
 
+#[derive(Debug)]
 enum ScanningType {
-    Id ,
-    Int ,
-    String ,
-    Punctuation ,
+    Id,
+    Int,
+    String,
+    Punctuation { remain: HashSet<&'static str> },
 }
 
+
+#[derive(Debug)]
 struct ConcreteScannerState {
     scanning_type: ScanningType,
     str_so_far: String,
@@ -34,154 +43,202 @@ struct ConcreteScannerState {
 
 type ScannerState = Option<ConcreteScannerState>;
 
+#[derive(Debug)]
 enum CharMatchState {
-    Forbidden { errorContext: Option<String> },
-    EndOfToken,
+    Forbidden { error_ctx: Option<String> },
+    EndOfToken { next_scan_type: ScannerState },
     Match,
 }
 
-pub fn scanner(s: String) -> impl Iterator<Item = error::Result<Token>> {
-    s.split("\n")
-        .enumerate()
-        .peekable()
-        .map(|(line_idx, line)| {
-            // Returns Result<Vec<Token>>. If there's something awry, the line is
-            // at fault.
-            // TODO: How to add a dummy variable to our filter_map? Is iter::scan sufficient?
-            line.chars().enumerate().scan(
-                ScannerState::NoContext,
-                move |state: &mut ScannerState,
-                      (col_idx, chr)|
-                      -> Option<Result<Token, OmegaError>> {
-                    match state {
-                        ScannerState::NoContext => {
-                            match chr {
-                                '"' => {
-                                    *state = ScannerState::String {
-                                        str_so_far: String::new(),
-                                    }
-                                }
-                                chr if chr.is_ascii_digit() => {
-                                    *state = ScannerState::Int {
-                                        str_so_far: chr.to_string(),
-                                    }
-                                }
-                                chr if chr.is_ascii_alphabetic() || chr == '_' => {
-                                    *state = ScannerState::Id {
-                                        str_so_far: chr.to_string(),
-                                    }
-                                }
-                            };
-                            None
-                        }
-                        ScannerState::String { str_so_far }
-                        | ScannerState::Int { str_so_far }
-                        | ScannerState::Id { str_so_far } => {
-                            match state.chr_type(chr) {
-                                CharMatchState::Forbidden { errorContext } => {
-                                    Some(error::Result::<Token>::Err(OmegaError::InvalidCharacter(
-                                        InvalidCharacter {
-                                            chr,
-                                            coord: Coord {
-                                                col: (col_idx + 1) as u32,
-                                                line: (line_idx + 1) as u32,
-                                            },
-                                            context: errorContext
-                                                .unwrap_or("Unknown context".to_owned()),
+pub fn scanner<'a> (s: &'a str) -> impl Iterator<Item = error::Result<Token>> + 'a {
+    //! TODO: Anyway to turn this into s: String?
+    s.split('\n').enumerate().flat_map(|(line_idx, line)| {
+        // Returns Result<Vec<Token>>. If there's something awry, the line is
+        // at fault.
+        println!("Line {}: {}", line_idx, line);
+        // TODO: looks like scan() is not behaving as expected.
+        // it exits at the first None return.
+        line.chars().enumerate().scan(
+            (line_idx, ScannerState::None),
+            |(line_idx, state), (col_idx, chr)| -> Option<Result<Token, OmegaError>> {
+                println!("{}:{} '{}': Pre-state is {:?}", line_idx, col_idx, chr, state);
+                match state {
+                    None => {
+                        match chr {
+                            '"' => {
+                                *state = Some(ConcreteScannerState {
+                                    scanning_type: ScanningType::String,
+                                    str_so_far: String::new(),
+                                });
+                                println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                            }
+                            chr if chr.is_ascii_digit() => {
+                                *state = Some(ConcreteScannerState {
+                                    scanning_type: ScanningType::Int,
+                                    str_so_far: chr.to_string(),
+                                });
+                                println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                            }
+                            chr if chr.is_ascii_alphabetic() || chr == '_' => {
+                                *state = Some(ConcreteScannerState {
+                                    scanning_type: ScanningType::Id,
+                                    str_so_far: chr.to_string(),
+                                });
+                                println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                            }
+                            chr => {
+                                let matches = PunctuationBookkeep.match_first_char(chr);
+                                if !matches.is_empty() {
+                                    *state = Some(ConcreteScannerState {
+                                        scanning_type: ScanningType::Punctuation {
+                                            remain: matches,
                                         },
-                                    )))
+                                        str_so_far: chr.to_string(),
+                                    })
                                 }
-                                CharMatchState::Match => {
-                                    // *str_so_far += chr.to_string();
-                                    None
-                                }
-                                CharMatchState::EndOfToken => Some(Ok(state.construct_token(
-                                    col_idx,
-                                    line_idx,
-                                    str_so_far.to_string(),
-                                ))),
-                            };
-                            // *str_so_far += &chr.to_string();
+                                println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                            }
+                        };
+                        None
+                    }
+                    Some(concrete_v) => match concrete_v.chr_type(chr) {
+                        CharMatchState::Forbidden { error_ctx } => {
+                            Some(Err(OmegaError::InvalidCharacter(InvalidCharacter {
+                                chr,
+                                coord: Coord {
+                                    col: (col_idx + 1) as u32,
+                                    line: (*line_idx + 1) as u32,
+                                },
+                                context: error_ctx.unwrap_or("Unknown context".to_owned()),
+                            })))
+                        }
+                        CharMatchState::EndOfToken { next_scan_type } => {
+                            let str_so_far = state.as_ref().unwrap().str_so_far.clone();
+                            let tok = state
+                                .as_ref()
+                                .unwrap()
+                                .construct_token(col_idx, *line_idx, str_so_far);
+                            *state = next_scan_type;
+                            Some(Ok(tok))
+                        }
+                        CharMatchState::Match => {
+                            state.as_mut().unwrap().str_so_far += &chr.to_string();
                             None
                         }
-                    }
-                },
-            )
-        })
-        .flatten()
+                    },
+                }
+            },
+        )
+    })
 }
 
-impl ScannerState {
-    fn chr_type(&self, chr: char) -> CharMatchState {
-        match *self {
-            Self::String { str_so_far } => match chr {
-                '"' => CharMatchState::EndOfToken,
+trait ScanHelp {
+    fn chr_type(&mut self, chr: char) -> CharMatchState;
+    fn construct_token(&self, col_idx: usize, line_idx: usize, string_value: String) -> Token;
+}
+
+impl ScanHelp for ConcreteScannerState {
+    fn chr_type(&mut self, chr: char) -> CharMatchState {
+        match &mut self.scanning_type {
+            ScanningType::String => match chr {
+                '"' => CharMatchState::EndOfToken {
+                    next_scan_type: None,
+                },
                 // TODO: for now, accept everything, don't need to worry about escape sequence
                 _ => CharMatchState::Match,
             },
-            Self::Int { str_so_far } => match chr {
-                chr if chr.is_ascii_whitespace() => CharMatchState::EndOfToken,
-                chr if PunctuationBookkeep.match_first_char(chr).is_some() => {
-                    CharMatchState::EndOfToken
-                }
+            ScanningType::Int => match chr {
+                chr if chr.is_ascii_whitespace() => CharMatchState::EndOfToken {
+                    next_scan_type: None,
+                },
                 chr if chr.is_ascii_digit() || chr == '_' => CharMatchState::Match,
-                chr => CharMatchState::Forbidden {
-                    errorContext: Some(format!(
-                        "Unexpected character '{}' while parsing integer literal",
-                        chr
-                    )),
-                },
-            },
-            Self::Id { str_so_far } => match chr {
-                chr if chr.is_ascii_whitespace() => CharMatchState::EndOfToken,
-                chr if PunctuationBookkeep.match_first_char(chr).is_some() => {
-                    CharMatchState::EndOfToken
+                chr => {
+                    let punc_match = PunctuationBookkeep.match_first_char(chr);
+                    if punc_match.len() > 0 {
+                        CharMatchState::EndOfToken {
+                            next_scan_type: Some(ConcreteScannerState {
+                                scanning_type: ScanningType::Punctuation { remain: punc_match },
+                                str_so_far: chr.to_string(),
+                            }),
+                        }
+                    } else {
+                        CharMatchState::Forbidden {
+                            error_ctx: Some(format!(
+                                "Unexpected character '{}' while parsing integer literal",
+                                chr
+                            )),
+                        }
+                    }
                 }
-                chr if chr.is_ascii_alphanumeric() => CharMatchState::Match,
-                chr => CharMatchState::Forbidden {
-                    errorContext: Some(format!("Unexpected character '{}' while parsing id", chr)),
-                },
             },
-            Self::NoContext => panic!("Should not call chr_type with NoContext"),
+            ScanningType::Id => match chr {
+                chr if chr.is_ascii_whitespace() => CharMatchState::EndOfToken {
+                    next_scan_type: None,
+                },
+                chr if chr.is_ascii_alphanumeric() => CharMatchState::Match,
+                chr => {
+                    let punc_match = PunctuationBookkeep.match_first_char(chr);
+                    if punc_match.len() > 0 {
+                        CharMatchState::EndOfToken {
+                            next_scan_type: Some(ConcreteScannerState {
+                                scanning_type: ScanningType::Punctuation { remain: punc_match },
+                                str_so_far: chr.to_string(),
+                            }),
+                        }
+                    } else {
+                        CharMatchState::Forbidden {
+                            error_ctx: Some(format!(
+                                "Unexpected character '{}' while parsing id",
+                                chr
+                            )),
+                        }
+                    }
+                }
+            },
+            ScanningType::Punctuation { remain } => {
+                // update the remaining to this new character
+                remain.retain(|v| {
+                    v.chars()
+                        .nth(self.str_so_far.len())
+                        .map(|c| c == chr)
+                        .unwrap_or(false)
+                });
+                self.str_so_far.push(chr);
+                let ret = match remain.len() {
+                    0 => CharMatchState::Forbidden {
+                        error_ctx: Some(format!(
+                            "No matching punctuation found for {}",
+                            self.str_so_far
+                        )),
+                    },
+                    1 => CharMatchState::EndOfToken {
+                        next_scan_type: None,
+                    },
+                    _ => CharMatchState::Match,
+                };
+                ret
+            }
         }
     }
-    // fn is_ending_chr(&self, chr: char) -> bool {
-    //     match *self {
-    //         Self::String { str_so_far } => chr == '"',
-    //         Self::Int { str_so_far } | Self::Id { str_so_far } => chr.is_ascii_whitespace(),
-    //         Self::NoContext => false,
-    //     }
-    // }
-    // fn chr_acceptable(&self, chr: char) -> bool {
-    //     match *self {
-    //         // TODO: for now, accept everything, don't need to worry about escape sequence
-    //         Self::String { str_so_far } => true,
-    //         Self::Int { str_so_far } => chr.is_ascii_digit() || chr == '_',
-    //         Self::Id { str_so_far } => true,
-    //         Self::NoContext => panic!("chr_acceptable should not be called with NoContext"),
-    //     }
-    // }
     fn construct_token(&self, col_idx: usize, line_idx: usize, string_value: String) -> Token {
         Token {
-            kind: match *self {
-                Self::String { str_so_far } => TokenType::StringLiteral,
-                Self::Int { str_so_far } => TokenType::IntLiteral,
-                Self::Id { str_so_far } => {
+            kind: match &self.scanning_type {
+                ScanningType::String => TokenType::StringLiteral,
+                ScanningType::Int => TokenType::IntLiteral,
+                ScanningType::Id => {
                     // Special handler here, do we transform this to a keyword?
-                    match str_so_far.as_str() {
+                    match self.str_so_far.as_str() {
                         s_ref if PunctuationBookkeep.contains(s_ref) => TokenType::Keyword,
                         &_ => TokenType::Id,
                     }
                 }
-                Self::NoContext => {
-                    panic!("NoContext should not be called to crate construct_token")
-                }
+                ScanningType::Punctuation { remain: _ } => TokenType::Punctuation,
             },
+            string_value,
             coord: Coord {
                 col: (col_idx + 1) as u32,
                 line: (line_idx + 1) as u32,
             },
-            string_value,
         }
     }
 }

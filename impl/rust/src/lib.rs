@@ -1,3 +1,4 @@
+#![deny(elided_lifetimes_in_paths)]
 pub mod error;
 pub mod token;
 pub mod symbol;
