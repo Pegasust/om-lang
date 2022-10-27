@@ -55,51 +55,71 @@ pub fn scanner<'a> (s: &'a str) -> impl Iterator<Item = error::Result<Token>> + 
     s.split('\n').enumerate().flat_map(|(line_idx, line)| {
         // Returns Result<Vec<Token>>. If there's something awry, the line is
         // at fault.
-        println!("Line {}: {}", line_idx, line);
+        // println!("Line {}: {}", line_idx, line);
         // TODO: looks like scan() is not behaving as expected.
         // it exits at the first None return.
-        line.chars().enumerate().scan(
-            (line_idx, ScannerState::None),
-            |(line_idx, state), (col_idx, chr)| -> Option<Result<Token, OmegaError>> {
+        let mut state = ScannerState::None;
+        line.chars().enumerate().filter_map(
+            move |(col_idx, chr)| -> Option<Result<Token, OmegaError>> {
                 println!("{}:{} '{}': Pre-state is {:?}", line_idx, col_idx, chr, state);
-                match state {
+                match &mut state {
                     None => {
                         match chr {
                             '"' => {
-                                *state = Some(ConcreteScannerState {
+                                state = Some(ConcreteScannerState {
                                     scanning_type: ScanningType::String,
                                     str_so_far: String::new(),
                                 });
                                 println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                        None
                             }
                             chr if chr.is_ascii_digit() => {
-                                *state = Some(ConcreteScannerState {
+                                state = Some(ConcreteScannerState {
                                     scanning_type: ScanningType::Int,
                                     str_so_far: chr.to_string(),
                                 });
                                 println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                        None
                             }
                             chr if chr.is_ascii_alphabetic() || chr == '_' => {
-                                *state = Some(ConcreteScannerState {
+                                state = Some(ConcreteScannerState {
                                     scanning_type: ScanningType::Id,
                                     str_so_far: chr.to_string(),
                                 });
                                 println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                        None
                             }
                             chr => {
                                 let matches = PunctuationBookkeep.match_first_char(chr);
-                                if !matches.is_empty() {
-                                    *state = Some(ConcreteScannerState {
-                                        scanning_type: ScanningType::Punctuation {
-                                            remain: matches,
-                                        },
-                                        str_so_far: chr.to_string(),
-                                    })
-                                }
+                                let ret = match matches.len() {
+                                    0 => Some(Err(InvalidCharacter{
+                                        chr,
+                                        coord: Coord { col: col_idx as u32+1, line: line_idx as u32+1 },
+                                        context: format!("Invalid character '{}'. Not in any first set", chr)
+                                    })),
+                                        // special case: a single character punctuation
+                                        1 => Some(Ok(Token{
+                                        coord: Coord {col: col_idx as u32+1, line: line_idx as u32+1},
+                                        kind: TokenType::Punctuation,
+                                        string_value: chr.to_string()
+                                    })),
+                                        _ => 
+                                        {
+                                            state = Some(ConcreteScannerState {
+                                                scanning_type: ScanningType::Punctuation {
+                                                    remain: matches,
+                                                },
+                                                str_so_far: chr.to_string(),
+                                            });
+                                            None
+                                        }
+
+
+                                };
                                 println!("{}:{} '{}': State is {:?}", line_idx, col_idx, chr, state);
+                                ret
                             }
-                        };
-                        None
+                        }
                     }
                     Some(concrete_v) => match concrete_v.chr_type(chr) {
                         CharMatchState::Forbidden { error_ctx } => {
@@ -107,7 +127,7 @@ pub fn scanner<'a> (s: &'a str) -> impl Iterator<Item = error::Result<Token>> + 
                                 chr,
                                 coord: Coord {
                                     col: (col_idx + 1) as u32,
-                                    line: (*line_idx + 1) as u32,
+                                    line: (line_idx + 1) as u32,
                                 },
                                 context: error_ctx.unwrap_or("Unknown context".to_owned()),
                             })))
@@ -117,8 +137,8 @@ pub fn scanner<'a> (s: &'a str) -> impl Iterator<Item = error::Result<Token>> + 
                             let tok = state
                                 .as_ref()
                                 .unwrap()
-                                .construct_token(col_idx, *line_idx, str_so_far);
-                            *state = next_scan_type;
+                                .construct_token(col_idx, line_idx, str_so_far);
+                            state = next_scan_type;
                             Some(Ok(tok))
                         }
                         CharMatchState::Match => {
@@ -196,6 +216,7 @@ impl ScanHelp for ConcreteScannerState {
                 }
             },
             ScanningType::Punctuation { remain } => {
+                assert!(remain.len() > 1);
                 // update the remaining to this new character
                 remain.retain(|v| {
                     v.chars()

@@ -19,8 +19,12 @@ mod tests {
     #[test]
     pub fn correct_omega() {
         let tests: Vec<String> = _correct_omega().unwrap();
-        for test in tests {
-            let tokens = Scanner::new(&test).iter().collect_vec();
+        for (test_idx, test) in tests.iter().enumerate() {
+            println!("Test {}: '{}'", test_idx, &test);
+            let tokens = Scanner::new(test).iter().map(|v| {
+                println!("Yielded: {:?}", v);
+                v
+            }).collect_vec();
             assert!(tokens.len() >= test.len(), "Test '{}': empty token", &test);
             assert!(tokens.iter().all(|res_token| res_token.is_ok()),
                 "Test '{}': error", &test
