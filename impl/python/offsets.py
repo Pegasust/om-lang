@@ -182,7 +182,8 @@ def _FuncDecl(ast: asts.FuncDecl, offset: int):
     ret_offset = _CompoundStmt(ast.body, offset + 4)
     func_type = ast.id.symbol.get_type()
     assert isinstance(func_type, symbols.FuncType), f"semantic_type: {ast.id.semantic_type}"
-    func_type.frame_size = ret_offset - 3 - offset + 1
+    # func_type.frame_size = ret_offset - 3 - offset + 1
+    func_type.frame_size = ret_offset - 3 - offset
     func_type.param_size = offset - 2 - param_offset + 1
     return (func_type.param_size, func_type.frame_size)
 
