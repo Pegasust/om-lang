@@ -1,0 +1,33 @@
+func f1(i: int, b: bool):int{
+    {
+        var i : int
+        i = 10
+        {
+            var i : int
+            i = 20
+            print i
+        }
+        i = i + 1
+        print i 
+        {
+            var b : bool
+            b = false
+            {
+                print b
+            }
+        }
+    }
+    print i 
+    print b
+    return 0
+}
+
+func main(){
+    var i : int
+    var b : bool
+    i = 10
+    b = true
+    print i 
+    print b 
+    call f1(i,b)
+}

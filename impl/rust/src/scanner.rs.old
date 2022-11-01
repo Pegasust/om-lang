@@ -1,0 +1,194 @@
+//! Scanner for Omega language, given some string input. This is an abstraction for string iterator
+//! and is intended to be used by the parser.
+
+use std::collections::HashSet;
+
+use crate::{
+    error::{self, OmegaError},
+    stdx::{self, StdxIter},
+    token::{Bookkeep, Coord, KeywordBookkeep, PunctuationBookkeep, Token, TokenType},
+};
+
+pub struct Scanner {
+    raw_string: String,
+}
+
+impl Scanner {
+    pub fn new<AnyStr: Into<String>>(s: AnyStr) -> Scanner {
+        Scanner {
+            raw_string: s.into(),
+        }
+    }
+    /// Creates an iterator through [Token]
+    pub fn iter(&self) -> impl Iterator<Item = error::Result<Token>> + '_ {
+        // I can't believe I just did it. Thanks for a lot of the references,
+        // itertools.
+        scanner(&self.raw_string)
+    }
+}
+
+enum ScannerStateType {
+    Start,
+    NoContext,
+    IdOrKeyword,
+    IntLiteral,
+    StringLiteral(char),
+    Punctuation { remain: HashSet<&'static str> },
+}
+
+struct ScannerState {
+    scan_type: ScannerStateType,
+    str_so_far: String,
+    // we need to store the whole coord because of multiline string support
+    first_chr_coord: Coord,
+}
+
+fn make_coord(col_idx: usize, line_idx: usize) -> Coord {
+    Coord {
+        col: col_idx as u32 + 1,
+        line: line_idx as u32 + 1,
+    }
+}
+
+pub fn scanner(raw_input: &str) -> impl Iterator<Item = error::Result<Token>> + '_ {
+    type ItemType = error::Result<Token>;
+    let mut scanner_state = ScannerState {
+        scan_type: ScannerStateType::Start,
+        str_so_far: String::new(),
+        first_chr_coord: Coord { line: 0, col: 0 },
+    };
+    raw_input
+        .lines()
+        .enumerate()
+        .filter_map(move |(line_idx, line)| {
+            let iter = line
+                .chars()
+                .enumerate()
+                .filter_map(move |(col_idx, chr)| -> Option<Result<Token, OmegaError>> {
+                    match &scanner_state.scan_type {
+                        ScannerStateType::Start | ScannerStateType::NoContext => match chr {
+                            chr if chr.is_ascii_whitespace() => None,
+                            chr if chr.is_ascii_digit() => {
+                                scanner_state.scan_type = ScannerStateType::IntLiteral;
+                                None
+                            }
+                            chr if chr.is_ascii_alphabetic() || chr == '_' => {
+                                scanner_state.scan_type = ScannerStateType::IdOrKeyword;
+                                None
+                            }
+                            '"' | '\'' => {
+                                scanner_state.scan_type = ScannerStateType::StringLiteral(chr);
+                                None
+                            }
+                            _ => {
+                                let punc_matches = PunctuationBookkeep.match_first_char(chr);
+                                match punc_matches.len() {
+                                    0 => {
+                                        // no matches, even if this is the default case
+                                        Some(Err(OmegaError::InvalidCharacter {
+                                            chr,
+                                            coord: make_coord(col_idx, line_idx),
+                                            context: format!(
+                                                "An Omega token cannot start with '{}'",
+                                                chr
+                                            ),
+                                        }
+                                        .into()))
+                                    }
+                                    1 => {
+                                        // there is only one match, keep the scanner_state clean
+                                        Some(Ok(Token {
+                                            coord: make_coord(col_idx, line_idx),
+                                            kind: TokenType::Punctuation,
+                                            string_value: chr.to_string(),
+                                        }))
+                                    }
+                                    _ => {
+                                        scanner_state.scan_type = ScannerStateType::Punctuation {
+                                            remain: punc_matches,
+                                        };
+                                        scanner_state.str_so_far = chr.to_string();
+                                        None
+                                    }
+                                }
+                            }
+                        },
+                        ScannerStateType::IntLiteral => todo!(),
+                        ScannerStateType::IdOrKeyword => todo!(),
+                        ScannerStateType::StringLiteral(_) => todo!(),
+                        ScannerStateType::Punctuation { remain } => todo!(),
+                    }
+                })
+                .chain(scanner_state.end_iter())
+                .non_empty();
+            iter
+        })
+        .flatten()
+}
+
+impl ScannerState {
+    fn token_id_or_keyword(&self) -> Token {
+        assert!(matches!(self.scan_type, ScannerStateType::IdOrKeyword));
+        Token {
+            coord: self.first_chr_coord,
+            string_value: self.str_so_far,
+            kind: if KeywordBookkeep.contains(&*self.str_so_far) {
+                TokenType::Keyword
+            } else {
+                TokenType::Id
+            },
+        }
+    }
+    fn end_iter(&self) -> DispatchChain<error::Result<Token>> {
+        match self.scan_type {
+            ScannerStateType::NoContext | ScannerStateType::Start => std::iter::empty().into(),
+            // TODO: to disable multiline support, change the following to inject an error iter
+            ScannerStateType::StringLiteral(_) => std::iter::empty().into(),
+            ScannerStateType::IntLiteral => std::iter::once(Ok(Token {
+                coord: self.first_chr_coord,
+                string_value: self.str_so_far,
+                kind: TokenType::IntLiteral,
+            })).into(),
+            ScannerStateType::Punctuation { remain } => {
+                assert!(remain.len() > 1);
+                std::iter::once(Err(error::OmegaError::UnexpectedLineEnd {
+                    coord: self.first_chr_coord,
+                    context: format!(
+                        "Punctuation '{}' ambiguously match: {:?}",
+                        self.str_so_far, remain
+                    ),
+                })).into()
+            }
+            ScannerStateType::IdOrKeyword => {
+                std::iter::once(Ok(self.token_id_or_keyword())).into()
+            }
+        }
+    }
+}
+
+enum DispatchChain<T> {
+    Empty(std::iter::Empty<T>),
+    Once(std::iter::Once<T>),
+}
+
+impl<T> Iterator for DispatchChain<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Empty(e) => e.next(),
+            Self::Once(e) => e.next(),
+        }
+    }
+}
+
+impl<T> From<std::iter::Once<T>> for DispatchChain<T> {
+    fn from(value: std::iter::Once<T>) -> Self {
+        Self::Once(value)
+    }
+}
+
+impl<T> From<std::iter::Empty<T>> for DispatchChain<T> {
+    fn from(value: std::iter::Empty<T>) -> Self {
+        Self::Empty(value)
+    }
+}

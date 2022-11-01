@@ -1,0 +1,55 @@
+func f2(x:int, y:int, b:bool):bool{
+    var k : int 
+    x = x + y 
+    y = y - 2
+    b = b or true
+    {
+        var b : bool 
+        var k : int
+        k = 0
+        b = true 
+        while (k<5){
+            b = b and true
+            k = k + 1
+        }
+        print b
+        {
+            var b : int
+            b = 15 
+            b = b * 2
+            b = b / 2
+            print b
+        }
+        {
+            var x : int 
+            x = 10 
+            x = x + 1
+            x = x * 5
+            print x
+        }
+        {
+            var y : int 
+            y = 40
+            y = y + 5 
+            print y 
+            {
+                var y : bool 
+                y = true
+            }
+        }
+    }
+    print b 
+    print x 
+    print y 
+    return true
+}
+
+func main(){
+    var x : int 
+    var y : int 
+    var z : bool 
+    x = 20 
+    y = 30 
+    z = true
+    call f2(x, y , z)
+}

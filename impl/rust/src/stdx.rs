@@ -1,35 +1,21 @@
-// pub struct BootmapIterator<It, T, B, F>
-// where
-//     It: Iterator<Item = T>,
-//     F: Fn(T, B) -> (T, B),
-// {
-//     base_iter: It,
-//     bootstrap: B,
-//     map_fn: F,
-// }
-//
-// impl<'a, It, T, B, F> Iterator for BootmapIterator<It, T, B, F>
-// where
-//     It: Iterator<Item = T>,
-//     F: Fn(T, B) -> (T, B),
-//     B: 'a,
-// {
-//     type Item = (T, &'a B);
-//
-//     fn next(&'a mut self) -> Option<Self::Item> {
-//         let base = self.base_iter.next()?;
-//         let mut v = self.map_fn(base, self.bootstrap);
-//         self.bootstrap = v.1;
-//         (v.0, &self.boot_strap)
-//     }
-// }
+use std::iter::Peekable;
 
-// /// Returns an iterator that performs map with some bootstrapping value
-// pub fn bootmap<It, T, B, F>(iter: It, map_fn: F, bootstrap: B)
-// -> impl Iterator<Item=(T, B)>
-// where It: Iterator<Item=T>, F: Fn((T, B))->(T, B),
-//
-// {
-//     let mut my_bootstrap = bootstrap;
-//     iter.map(|v| map_fn)
-// }
+pub(crate) fn iter_empty<It, T>(iter: It) -> (Peekable<It>, bool) where It: Iterator<Item=T> {
+    let mut peek = iter.peekable();
+    let is_empty = peek.peek().is_none();
+    (peek, is_empty)
+}
+
+pub(crate) fn opt_iter_least_1<It, T>(iter: It) -> Option<Peekable<It>> where It: Iterator<Item=T> {
+    let (peek, empty) = iter_empty(iter);
+    empty.then_some(peek)
+}
+
+pub(crate) trait StdxIter<T>: Iterator<Item=T> + Sized {
+    fn non_empty(self) -> Option<Peekable<Self>> {
+        opt_iter_least_1(self)
+    }
+}
+
+impl <It, T> StdxIter<T> for It where It: Iterator<Item=T> {}
+

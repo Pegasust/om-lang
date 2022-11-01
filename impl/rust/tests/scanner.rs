@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod scanner {
     use std::error::Error;
 
     use itertools::Itertools;
@@ -17,29 +17,39 @@ mod tests {
         )
     }
     #[test]
-    pub fn correct_omega() {
+    pub fn correct() {
         let tests: Vec<String> = _correct_omega().unwrap();
         for (test_idx, test) in tests.iter().enumerate() {
-            println!("Test {}: '{}'", test_idx, &test);
+            println!("-- Test {}: '{}'", test_idx, &test);
             let tokens = Scanner::new(test).iter().map(|v| {
-                println!("Yielded: {:?}", v);
+                println!("Yielded: {:?}", &v);
                 v
             }).collect_vec();
-            assert!(tokens.len() >= test.len(), "Test '{}': empty token", &test);
-            assert!(tokens.iter().all(|res_token| res_token.is_ok()),
-                "Test '{}': error", &test
-            )
+            assert!(tokens.len() >= if test.trim().len() == 0 {0} else {1}, "!!-- Test '{}':\nTokens: {:?}", &test, &tokens);
+            let errors = tokens.iter().filter(|v| v.is_err()).collect_vec();
+            assert!(errors.len() == 0, "!! --Test '{}':\nErrors: {:?}", &test, &errors);
+
         }
     }
 
     #[test]
-    pub fn incorrect_omega() {
+    pub fn incorrect() {
         let tests: Vec<String> = _incorrect_omega().unwrap();
         for test in tests {
             let tokens = Scanner::new(&test).iter().collect_vec();
             assert!(tokens.iter().any(|res_token| res_token.is_err()),
                 "Test '{}': no error; tokens: {:?}", &test, tokens
             )
+        }
+    }
+
+    #[test]
+    pub fn multiline() {
+        let tests = vec![
+            r#""#
+        ].into_iter().map(|v| v.trim()).collect_vec();
+        for test in tests {
+
         }
     }
 }

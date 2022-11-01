@@ -1,0 +1,55 @@
+func f2(x:int, y : int , z: int):int{
+    var m : int 
+    m = x + y 
+    m = m * z
+    m = m / 2
+    return m
+}
+func foo(a:int , b: int, c:int, d: int , e:int, f:int):int{
+    var m : int 
+
+    a = a + b 
+    b = b + a 
+    {
+        var a: int 
+        a = 100
+        c = c + a
+        {
+            var b : int 
+            b = 200
+            d = d + b 
+            d = d * 2
+            b = 3
+            d = d / b
+            {
+                var a : int 
+                var b : int 
+                var z : int 
+                a = 4 
+                b = 3 
+                z = f2(a,b,e)
+                e = e + z
+            }
+        }
+    }
+    m = a + b - c / d + e
+    return m
+}
+
+func main(){
+    var m : int
+    var x : int 
+    var y: int 
+    var z : int 
+    var a : int
+    var b : int 
+    var c : int 
+    a = 10 
+    b = 20 
+    c = 30 
+    x = 40
+    y = 50
+    z = 60 
+    m = foo(a, b, c, x, y, z)
+    print m
+}

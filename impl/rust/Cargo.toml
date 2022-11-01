@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+coalesce = "0.1.1"
 itertools = "0.10.5"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = "1.0.87"
@@ -16,3 +17,4 @@ project-root = "0.2.2"
 [package.metadata.scripts]
 watch-test = "cargo watch -s 'cargo test'"
 watch-debug = "cargo watch -s 'echo ============ $(date +%H:%M:%S) ============ && cargo clippy && cargo test -- --nocapture'"
+watch-debug-local = "cargo watch -s \"echo === $(date +%H:%M:%S) === && cargo clippy && cargo test scanner::correct -- --nocapture --exact\""

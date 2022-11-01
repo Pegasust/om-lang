@@ -1,19 +1,21 @@
 use core::fmt;
-use std::{result, error::Error};
+use std::{error::Error, result};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::token::Coord;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum OmegaError {
-    InvalidCharacter(InvalidCharacter),
-}
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct InvalidCharacter {
-    pub(crate) chr: char,
-    pub(crate) coord: Coord,
-    pub(crate) context: String,
+    InvalidCharacter {
+        chr: char,
+        coord: Coord,
+        context: String,
+    },
+    UnexpectedLineEnd {
+        coord: Coord,
+        context: String,
+    },
 }
 
 impl Error for OmegaError {}
@@ -21,9 +23,14 @@ impl Error for OmegaError {}
 impl fmt::Display for OmegaError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidCharacter(c) => write!(f, "Invalid character \'{}\'@{:?}\n\t{}",
-                c.chr, c.coord, c.context
-                )
+            OmegaError::InvalidCharacter { chr, coord, context } => write!(
+                f,
+                "Invalid character \'{}\'@{:?}\n\t{}",
+                chr, coord, context
+            ),
+            OmegaError::UnexpectedLineEnd { coord, context } => write!(f,
+                "Unexpected line end @{:?}\n\t{}", coord, context
+            ),
         }
     }
 }

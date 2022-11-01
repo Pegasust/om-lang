@@ -1,0 +1,62 @@
+func f1(x:int):int{
+    var k : int
+    k = 10
+    while(k > 0){
+        x = k + x
+        k = k - 1
+    }
+    {
+        var m : int 
+        m = 50 
+        {
+            var k : int 
+            k = 10 
+            while(k < 15){
+                m = m + k 
+                k = k + 1
+            }
+            return m
+        }
+        return x 
+    }
+
+}
+func f2(x:int, y:int):bool{
+    var k : int 
+    var j : int 
+
+    if (x>y){
+        k = 60 
+        {
+            var n : int 
+            n = 10 
+            k = x + y - n + 5
+            print k
+        }
+    }
+    else{
+        j = 90
+        {
+            var k : int 
+            k = 30
+            j = x + y - k + 5
+        }
+    }
+    if(k > j){
+        return true
+    }
+    return false
+}
+func main(x:int, y:int, z:int){
+    {
+        var x : int 
+        var m : int
+        var j : int
+        var n: bool
+        j = 40
+        x = 50 
+        x = x / 5 
+        m = f1(x)
+        n = f2(m,j)
+    }
+}
