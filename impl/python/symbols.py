@@ -66,7 +66,7 @@ class PhonyType(Type):
 
 
 class FuncType(Type):
-    def __init__(self, params, ret: Type):
+    def __init__(self, params: list[Type], ret: Type):
         self.params: list[Type] = params
         self.ret: Type = ret
         self.param_size: int = 0

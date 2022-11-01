@@ -4,6 +4,11 @@ from os import wait
 import asts
 import error
 import symbols
+import datetime
+
+def debug_log(*args):
+    with open("debug.txt", "w+") as f:
+        print(datetime.datetime.now(), *args, file=f)
 
 # This is the entry point for the visitor.
 def program(ast: asts.Program):
@@ -238,15 +243,17 @@ def _CompoundStmt(ast: asts.CompoundStmt):
 
     if ast.return_stmt is not None:
         ast.return_stmt.enclosing_scope = local_scope
+        # TODO: Should return stmt even has unscoped symbols?
         unscoped_symbs.extend(_Stmt(ast.return_stmt))
 
-    # drain filter would be ideal here
+    # Drain filter that retains the AST nodes that are still unscoped
     still_unscoped = list(unscoped_symbs) * 0 # borrow type with empty list
     for id in unscoped_symbs:
         declared_symbol = local_scope.lookup(id.token.value)
         # print(f"{symb=}, {decl=}")
         if not declared_symbol:
             # This better be a global var or function
+            debug_log(f"Rare: {id.token.value} is not declared")
             if not isinstance(id.semantic_type, symbols.FuncType):
                 error.error(f"Usage of undefined symbol id {id.token.value}", id.token.coord)
             still_unscoped.append(id)
@@ -283,12 +290,13 @@ def _FuncDecl(ast: asts.FuncDecl):
     func_id.symbol.set_type(
         symbols.FuncType([p.id.symbol.get_type() for p in param_symbs], ret_type)
     )
-    ast.func_scope.set_return_type(func_id.symbol.get_type())
     func_scope.set_return_type(ret_type)
 
     # parse the statements within the function
     ast.body.local_scope = symbols.LocalScope(func_scope)
     unscoped_symbs = _CompoundStmt(ast.body)
+    for unscoped in unscoped_symbs:
+        debug_log(f"RARE: FuncDecl: {unscoped} is unscoped")
     ast.id.semantic_type = func_scope.get_return_type()
     
     return (ast, unscoped_symbs)
