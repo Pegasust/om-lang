@@ -1,0 +1,95 @@
+input: func f1(x:int, y: int , b:bool):bool{
+    var c : int 
+    var d : int 
+    var i : int 
+    i = 0
+    c = x + 2
+    d = y + c
+    b = b or false
+    while (i < 5){
+        c = c + d 
+        d = d * 2
+        i = i + 1
+    }
+    print d 
+    { 
+        var k : int 
+        k = 0 
+        {
+            var j : int 
+            var m : bool
+            var k : bool
+            j = 0 
+            m = false 
+            k = true or m
+            {
+                var k : bool 
+                k = false 
+                print k
+            }
+            print k
+        }
+    }
+    return true
+}
+func main(){
+    var x : int 
+    var y : int 
+    var a: int 
+    var z : bool 
+    x = 10 
+    y = 25
+    a = 15
+    z = false
+    call f1(x, y, z)
+}
+f1: IdSymbol(@0x0,off:0,(int,int,bool)=>bool [fsize=10,psize=4],GlobalScope(@0x2,sym:Symtab(syms: [2](f1:IdSymbol(@0x0),main:IdSymbol(@0x1))),p:[],),"f1")
+x: IdSymbol(@0x3,off:-2,int,FuncScope(@0x6,sym:Symtab(syms: [3](x:IdSymbol(@0x3),y:IdSymbol(@0x4),b:IdSymbol(@0x5))),p:[GlobalScope(id:0x2,depth:0)],ret:bool),"x")
+y: IdSymbol(@0x4,off:-3,int,FuncScope(@0x6,sym:Symtab(syms: [3](x:IdSymbol(@0x3),y:IdSymbol(@0x4),b:IdSymbol(@0x5))),p:[GlobalScope(id:0x2,depth:0)],ret:bool),"y")
+b: IdSymbol(@0x5,off:-4,bool,FuncScope(@0x6,sym:Symtab(syms: [3](x:IdSymbol(@0x3),y:IdSymbol(@0x4),b:IdSymbol(@0x5))),p:[GlobalScope(id:0x2,depth:0)],ret:bool),"b")
+c: IdSymbol(@0x7,off:4,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"c")
+d: IdSymbol(@0x8,off:5,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"d")
+i: IdSymbol(@0x9,off:6,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"i")
+i: IdSymbol(@0xb,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"i")
+c: IdSymbol(@0xc,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"c")
+x: IdSymbol(@0xd,off:0,int,FuncScope(@0x6,sym:Symtab(syms: [3](x:IdSymbol(@0x3),y:IdSymbol(@0x4),b:IdSymbol(@0x5))),p:[GlobalScope(id:0x2,depth:0)],ret:bool),"x")
+d: IdSymbol(@0xe,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"d")
+y: IdSymbol(@0xf,off:0,int,FuncScope(@0x6,sym:Symtab(syms: [3](x:IdSymbol(@0x3),y:IdSymbol(@0x4),b:IdSymbol(@0x5))),p:[GlobalScope(id:0x2,depth:0)],ret:bool),"y")
+c: IdSymbol(@0x10,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"c")
+b: IdSymbol(@0x11,off:0,bool,FuncScope(@0x6,sym:Symtab(syms: [3](x:IdSymbol(@0x3),y:IdSymbol(@0x4),b:IdSymbol(@0x5))),p:[GlobalScope(id:0x2,depth:0)],ret:bool),"b")
+b: IdSymbol(@0x12,off:0,bool,FuncScope(@0x6,sym:Symtab(syms: [3](x:IdSymbol(@0x3),y:IdSymbol(@0x4),b:IdSymbol(@0x5))),p:[GlobalScope(id:0x2,depth:0)],ret:bool),"b")
+i: IdSymbol(@0x13,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"i")
+c: IdSymbol(@0x14,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"c")
+c: IdSymbol(@0x15,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"c")
+d: IdSymbol(@0x16,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"d")
+d: IdSymbol(@0x17,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"d")
+d: IdSymbol(@0x18,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"d")
+i: IdSymbol(@0x19,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"i")
+i: IdSymbol(@0x1a,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"i")
+d: IdSymbol(@0x1b,off:0,int,LocalScope(@0xa,sym:Symtab(syms: [3](c:IdSymbol(@0x7),d:IdSymbol(@0x8),i:IdSymbol(@0x9))),p:[FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"d")
+k: IdSymbol(@0x1c,off:7,int,LocalScope(@0x1d,sym:Symtab(syms: [1](k:IdSymbol(@0x1c))),p:[LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+k: IdSymbol(@0x1e,off:0,int,LocalScope(@0x1d,sym:Symtab(syms: [1](k:IdSymbol(@0x1c))),p:[LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+j: IdSymbol(@0x1f,off:8,int,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"j")
+m: IdSymbol(@0x20,off:9,bool,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"m")
+k: IdSymbol(@0x21,off:10,bool,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+j: IdSymbol(@0x23,off:0,int,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"j")
+m: IdSymbol(@0x24,off:0,bool,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"m")
+k: IdSymbol(@0x25,off:0,bool,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+m: IdSymbol(@0x26,off:0,bool,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"m")
+k: IdSymbol(@0x27,off:11,bool,LocalScope(@0x28,sym:Symtab(syms: [1](k:IdSymbol(@0x27))),p:[LocalScope(id:0x22,depth:4),LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+k: IdSymbol(@0x29,off:0,bool,LocalScope(@0x28,sym:Symtab(syms: [1](k:IdSymbol(@0x27))),p:[LocalScope(id:0x22,depth:4),LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+k: IdSymbol(@0x2a,off:0,bool,LocalScope(@0x28,sym:Symtab(syms: [1](k:IdSymbol(@0x27))),p:[LocalScope(id:0x22,depth:4),LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+k: IdSymbol(@0x2b,off:0,bool,LocalScope(@0x22,sym:Symtab(syms: [3](j:IdSymbol(@0x1f),m:IdSymbol(@0x20),k:IdSymbol(@0x21))),p:[LocalScope(id:0x1d,depth:3),LocalScope(id:0xa,depth:2),FuncScope(id:0x6,depth:1),GlobalScope(id:0x2,depth:0)],),"k")
+main: IdSymbol(@0x1,off:0,()=>void [fsize=6,psize=1],GlobalScope(@0x2,sym:Symtab(syms: [2](f1:IdSymbol(@0x0),main:IdSymbol(@0x1))),p:[],),"main")
+x: IdSymbol(@0x2c,off:4,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"x")
+y: IdSymbol(@0x2d,off:5,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"y")
+a: IdSymbol(@0x2e,off:6,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"a")
+z: IdSymbol(@0x2f,off:7,bool,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"z")
+x: IdSymbol(@0x32,off:0,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"x")
+y: IdSymbol(@0x33,off:0,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"y")
+a: IdSymbol(@0x34,off:0,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"a")
+z: IdSymbol(@0x35,off:0,bool,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"z")
+f1: IdSymbol(@0x36,off:0,(int,int,bool)=>bool [fsize=10,psize=4],GlobalScope(@0x2,sym:Symtab(syms: [2](f1:IdSymbol(@0x0),main:IdSymbol(@0x1))),p:[],),"f1")
+x: IdSymbol(@0x37,off:0,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"x")
+y: IdSymbol(@0x38,off:0,int,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"y")
+z: IdSymbol(@0x39,off:0,bool,LocalScope(@0x31,sym:Symtab(syms: [4](x:IdSymbol(@0x2c),y:IdSymbol(@0x2d),a:IdSymbol(@0x2e),z:IdSymbol(@0x2f))),p:[FuncScope(id:0x30,depth:1),GlobalScope(id:0x2,depth:0)],),"z")

@@ -21,6 +21,7 @@ def _Program(ast: asts.Program):
         (_func_symb, unscoped) = _FuncDecl(decl)
         func_symb = _func_symb.id.symbol
         assert isinstance(func_symb, symbols.IdSymbol)
+        assert isinstance(func_symb.get_type(), symbols.FuncType)
         func_symb.scope = global_scope
         global_scope.symtab[func_symb.name] = func_symb
         for symb_id in unscoped:
@@ -90,22 +91,22 @@ def _Type(ast: asts.Type):
 
 
 def _VarDecl(ast: asts.VarDecl):
-    id_symb = _Id(ast.id)
+    _Id(ast.id)
     var_type = _Type(ast.type_ast)
-    id_symb.semantic_type = var_type
-    id_symb.symbol.set_type(var_type)
-    # TODO: Might want to change this to VoidType
+    ast.id.semantic_type = var_type
+    # TODO: Might be VoidType due to it being a declaration
     ast.semantic_type = var_type
+    # ast.id.symbol = symbols.IdSymbol(ast.id.token.value, symbols.PhonyScope())
     return ast
 
 
 def _ParamDecl(ast: asts.ParamDecl):
-    id_symb = _Id(ast.id)
-    id_symb.semantic_type = _Type(ast.type_ast)
-    id_symb.symbol.set_type(id_symb.semantic_type)
-    ast.id.semantic_type = id_symb.semantic_type
-    # TODO: Might want to change this to VoidType
-    ast.semantic_type = ast.id.semantic_type
+    _Id(ast.id)
+    var_type = _Type(ast.type_ast)
+    ast.id.semantic_type = var_type
+    # TODO: Might be VoidType due to it being a declaration
+    ast.semantic_type = var_type
+    # ast.id.symbol = symbols.IdSymbol(ast.id.token.value, symbols.PhonyScope())
     return ast
 
 
@@ -142,8 +143,9 @@ def _CallExpr(ast: asts.CallExpr):
 
 
 def _Id(ast: asts.Id):
-    ast.symbol = symbols.IdSymbol(ast.token.value, symbols.PhonyScope())
-    ast.symbol.name = ast.token.value
+    # TODO: Is there a way we can avoid creation of this symbol?
+    # ast.symbol = symbols.IdSymbol(ast.token.value, symbols.PhonyScope())
+    # ast.symbol.name = ast.token.value
     return ast
 
 def _AssignStmt(ast: asts.AssignStmt):
@@ -196,16 +198,21 @@ def _CallStmt(ast: asts.CallStmt):
 def _CompoundStmt(ast: asts.CompoundStmt):
     local_scope = ast.local_scope
 
-    for decl in ast.decls:
-        _decl = _VarDecl(decl)
-        decl_id_symb = _decl.id.symbol
-        assert isinstance(decl_id_symb, symbols.IdSymbol)
-        if decl_id_symb.name in local_scope.symtab.keys():
-            error.error(f"Var \"{decl_id_symb.name}\" declared more than once",
-                        decl.id.token.coord)
-        local_scope.symtab[decl_id_symb.name] = decl_id_symb
-        decl_id_symb.scope = local_scope
+    for declared_symbol in ast.decls:
+        _decl = _VarDecl(declared_symbol)
+        # Validate if declared more than once
+        if _decl.id.token.value in local_scope.symtab.keys():
+            error.error(f"Var \"{_decl.id.token.value}\" declared more than once",
+                        declared_symbol.id.token.coord)
+        # Here, it's not yet declared
+        # create a new symbol
+        _decl.id.symbol = symbols.IdSymbol(_decl.id.token.value, local_scope)
+        _decl.id.symbol.set_type(_decl.id.semantic_type)
 
+        # add to symbol table
+        local_scope.symtab[_decl.id.token.value] = _decl.id.symbol
+
+    # collect unscoped symbols
     unscoped_symbs: list[asts.Id] = []
     for stmt in ast.stmts:
         # how to handle compound statements?
@@ -234,50 +241,49 @@ def _CompoundStmt(ast: asts.CompoundStmt):
         unscoped_symbs.extend(_Stmt(ast.return_stmt))
 
     # drain filter would be ideal here
-    _unscoped = list(unscoped_symbs) * 0 # borrow type with empty list
+    still_unscoped = list(unscoped_symbs) * 0 # borrow type with empty list
     for id in unscoped_symbs:
-        symb = id.symbol
-        assert isinstance(symb, symbols.IdSymbol)
-        decl = local_scope.lookup(symb.name)
+        declared_symbol = local_scope.lookup(id.token.value)
         # print(f"{symb=}, {decl=}")
-        if not decl:
-            _unscoped.append(id)
+        if not declared_symbol:
+            # This better be a global var or function
+            if not isinstance(id.semantic_type, symbols.FuncType):
+                error.error(f"Usage of undefined symbol id {id.token.value}", id.token.coord)
+            still_unscoped.append(id)
             continue
-        if not isinstance(decl, symbols.IdSymbol):
-            # print(f"WARNING: {decl} is not IdSymbol")
-            continue
+        if not isinstance(declared_symbol, symbols.IdSymbol):
+            error.error(f"INTERNAL: {id.token.value} points to, non IdSymbol: {declared_symbol}", id.token.coord)
+        id.symbol = declared_symbol
+        id.semantic_type = declared_symbol.get_type()
 
-        symb.set_type(decl.get_type())
-        symb.scope = decl.scope
-        id.semantic_type = symb.get_type()
-
-    return _unscoped # Since we have processed all unscoped symbols
+    return still_unscoped # Since we have processed all unscoped symbols
 
 
 def _FuncDecl(ast: asts.FuncDecl):
-    id_symb = _Id(ast.id)
+    func_id = _Id(ast.id)
     func_scope = ast.func_scope
 
     param_symbs = [_ParamDecl(param) for param in ast.params]
     for param in ast.params:
-        param_symb = param.id.symbol
-        assert isinstance(param_symb, symbols.IdSymbol)
-        if param_symb.name in func_scope.symtab.keys():
+        if param.id.token.value in func_scope.symtab.keys():
             error.error(
-                f"Param \"{param_symb.name}\" declared more than once",
+                f"Param \"{param.id.token.value}\" declared more than once",
                 param.id.token.coord
             )
-        func_scope.symtab[param_symb.name] = param_symb
-        param_symb.scope = func_scope
+        param.id.symbol = symbols.IdSymbol(param.id.token.value, func_scope)
+        param.id.symbol.set_type(param.id.semantic_type)
+        func_scope.symtab[param.id.token.value] = param.id.symbol
 
     ret_type = symbols.VoidType()
     if ast.ret_type_ast is not None:
         ret_type = _Type(ast.ret_type_ast)
     # assign function type of this function
-    id_symb.symbol.set_type(
+    
+    func_id.symbol = symbols.IdSymbol(func_id.token.value, func_scope)
+    func_id.symbol.set_type(
         symbols.FuncType([p.id.symbol.get_type() for p in param_symbs], ret_type)
     )
-    ast.func_scope.set_return_type(id_symb.symbol.get_type())
+    ast.func_scope.set_return_type(func_id.symbol.get_type())
     func_scope.set_return_type(ret_type)
 
     # parse the statements within the function
