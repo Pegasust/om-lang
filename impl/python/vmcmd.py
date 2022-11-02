@@ -6,6 +6,7 @@ from typing import List, Dict, Tuple, Set, Optional, Union
 import vm_parser
 import vm_scanner
 import vm_insns
+import vm_utils
 import vm
 
 
@@ -28,9 +29,7 @@ def main():
     insns: List[vm.Insn] = psr.parse()
 
     if args.verbose:
-        print("Instructions:")
-        for i, insn in enumerate(insns):
-            print(f"[{i:5}]", vm_insns.dis(insn, indent=8, long=False))
+        vm_utils.dump_insns(insns)
 
     params = list(reversed(args.args)) + [0]  # w/ space for return value
     exe = vm.Execution(

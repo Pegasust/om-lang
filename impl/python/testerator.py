@@ -12,6 +12,9 @@ import scanner
 import parser
 import typecheck
 import bindings
+import codegen
+import vm_utils
+
 import offsets
 import ast_pprint
 import os
@@ -59,6 +62,9 @@ def test_offsets(student: AST, expected: AST, crash: bool) -> bool:
 
     return test(student, expected, fn, crash)
 
+def nothing(student, expected, crash):
+    return True
+
 
 def log_test(test, retval):
     input_content_hash = hex(hash(test['input']))
@@ -91,6 +97,12 @@ def compile(input: str):
     typecheck.program(tree)
     offsets.program(tree)
     return tree
+
+def compile_run(input: str):
+    tree = compile(input)
+    insns = codegen.generate(tree)
+    vm_utils.invoke_omega(insns, [], False)
+    return None
 
 
 def run(inputs: list[str], verbose, crash) -> tuple[int, int]:
