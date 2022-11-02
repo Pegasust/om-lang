@@ -1,0 +1,4 @@
+push 7 // push 7 onto the stack
+print // this is a comment and whitespace doesn't matter
+halt "end of program"
+
