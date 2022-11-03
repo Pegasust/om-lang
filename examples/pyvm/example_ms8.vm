@@ -1,0 +1,129 @@
+// omega-specific convention: call main and exit
+pushl "main"
+call
+halt
+
+// func g()
+lab "g"
+  // print 1
+  push 1
+  print
+  // implicit return
+  // pop until RA (basically pop our current offset)
+  // maintain RET so that the offset from FP is: FP, SP[, RET], RA
+  ji
+
+// func f()
+lab "f"
+  //print 2
+  push 2
+  print
+
+  // call g()
+  /// PRELUDE
+  /// back up current function context
+  save
+  /// push args to pass to g
+  /// save FP & SP
+  pushFP 0
+  pushSP 0
+  /// call the function
+  pushl "g"
+  call
+  /// EPILOGUE
+  /// if `call` and the function returns, we're discarding RET
+  // pop
+  /// restore FP & SP
+  popSP
+  popFP
+  /// pop args that passed to g
+  /// now restore current function context
+  restore
+
+  // print 3
+  push 3
+  print
+
+  // call g()
+  /// PRELUDE
+  /// back up current function context
+  save
+  /// push args to pass to g
+  /// save FP & SP
+  pushFP 0
+  pushSP 0
+  /// call the function
+  pushl "g"
+  call
+  /// EPILOGUE
+  /// if `call` and the function returns, we're discarding RET
+  // pop
+  /// restore FP & SP
+  popSP
+  popFP
+  /// pop args that passed to g
+  /// now restore current function context
+  restore
+
+  // return
+  /// pop until RA (basically pop our current offset)
+  /// maintain RET so that the offset from FP is: FP, SP[, RET], RA
+  ji
+
+// func main()
+lab "main"
+  // print 4
+  push 4
+  print
+
+  // call f()
+  /// PRELUDE
+  /// back up current function context
+  save
+  /// push args to pass to f
+  /// save FP & SP
+  pushFP 0
+  pushSP 0
+  /// call the function
+  pushl "f"
+  call
+  /// EPILOGUE
+  /// if `call` and the function returns, we're discarding RET
+  // pop
+  /// restore FP & SP
+  popSP
+  popFP
+  /// pop args that passed to f
+  /// now restore current function context
+  restore
+
+  // call g()
+  /// PRELUDE
+  /// back up current function context
+  save
+  /// push args to pass to g
+  /// save FP & SP
+  pushFP 0
+  pushSP 0
+  /// call the function
+  pushl "g"
+  call
+  /// EPILOGUE
+  /// if `call` and the function returns, we're discarding RET
+  // pop
+  /// restore FP & SP
+  popSP
+  popFP
+  /// pop args that passed to g
+  /// now restore current function context
+  restore
+
+  // print 5
+  push 5
+  print
+
+  // return
+  /// pop until RA (basically pop our current offset)
+  /// maintain RET so that the offset from FP is: FP, SP[, RET], RA 
+  ji
+
