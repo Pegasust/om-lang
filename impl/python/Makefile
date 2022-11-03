@@ -3,3 +3,7 @@ test: pickle.pickle parser.py scanner.py bindings.py testerator.py symbols.py ty
 	rm test_output/*
 	./test_diff.sh
 
+to_vm_test:
+
+.PHONY: to_vm_test test
+
