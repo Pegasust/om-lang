@@ -15,6 +15,7 @@ def get_args():
     ap.add_argument("args", nargs="*", type=int, help="Arguments to pass to VM")
     ap.add_argument("--file", type=str, required=True, help="The file to run")
     ap.add_argument("--verbose", action="store_true", help="verbose output")
+    ap.add_argument("--debug-step", action="store_true", help="debug with step")
     return ap.parse_args()
 
 
@@ -39,6 +40,7 @@ def main():
         {"SP": len(params)},
     )
     exe.verbose = args.verbose
+    exe.debug_step = args.debug_step
     exe.run()
 
 

@@ -12,7 +12,7 @@ class Parser:
         if self.current() == kind:
             return self.scanner.consume()
         else:
-            self.error(f"expected {kind}")
+            self.error(f"expected {kind}, got ${self.current()}")
 
     def current(self):
         return self.scanner.peek().kind

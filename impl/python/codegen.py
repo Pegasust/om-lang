@@ -1,7 +1,6 @@
-from typing import List
-
 import asts
 import symbols
+import itertools
 from vm import (
     Equal,
     Insn,
@@ -41,17 +40,19 @@ from vm import (
 
 
 # This is the entry point for the visitor.
-def generate(ast: asts.Program) -> List[Insn]:
+def generate(ast: asts.Program) -> list[Insn]:
     return _Program(ast)
 
 
-def _Program(ast: asts.Program) -> List[Insn]:
-    for decl in ast.decls:
-        f: list[Insn] = _FuncDecl(decl)
-    pass
+def _Program(ast: asts.Program) -> list[Insn]:
+    return list(itertools.chain.from_iterable(_FuncDecl(decl)
+                                              for decl in ast.decls))
+    # for decl in ast.decls:
+    #     f: list[Insn] = _FuncDecl(decl)
+    # pass
 
 
-def _Stmt(ast: asts.Stmt) -> List[Insn]:
+def _Stmt(ast: asts.Stmt) -> list[Insn]:
     if isinstance(ast, asts.AssignStmt):
         return _AssignStmt(ast)
     elif isinstance(ast, asts.IfStmt):
@@ -88,20 +89,20 @@ def _PrintStmt(ast: asts.PrintStmt) -> list[Insn]:
     pass
 
 
-def _IfStmt(ast: asts.IfStmt) -> List[Insn]:
+def _IfStmt(ast: asts.IfStmt) -> list[Insn]:
     # handle ast.expr
     # handle ast.thenStmt
     # handle ast.elseStmt
     pass
 
 
-def _WhileStmt(ast: asts.WhileStmt) -> List[Insn]:
+def _WhileStmt(ast: asts.WhileStmt) -> list[Insn]:
     # handle ast.expr
     # handle ast.stmt
     pass
 
 
-def control(e: asts.Expr, label: str, sense: bool) -> List[Insn]:
+def control(e: asts.Expr, label: str, sense: bool) -> list[Insn]:
     match e:
         case asts.BinaryOp():
             return control_BinaryOp(e, label, sense)
@@ -117,7 +118,7 @@ def control(e: asts.Expr, label: str, sense: bool) -> List[Insn]:
     pass
 
 
-def control_BinaryOp(e: asts.BinaryOp, label: str, sense: bool) -> List[Insn]:
+def control_BinaryOp(e: asts.BinaryOp, label: str, sense: bool) -> list[Insn]:
     match e.op.kind:
         case "and":
             pass
@@ -129,7 +130,7 @@ def control_BinaryOp(e: asts.BinaryOp, label: str, sense: bool) -> List[Insn]:
     pass
 
 
-def control_UnaryOp(e: asts.UnaryOp, label: str, sense: bool) -> List[Insn]:
+def control_UnaryOp(e: asts.UnaryOp, label: str, sense: bool) -> list[Insn]:
     match e.op.kind:
         case "not":
             pass
@@ -178,11 +179,11 @@ def lval_id(e: asts.IdExpr) -> list[Insn]:
     pass
 
 
-def lval_array_cell(e: asts.ArrayCell) -> List[Insn]:
+def lval_array_cell(e: asts.ArrayCell) -> list[Insn]:
     assert False, "Arrays are not part of codegen in CSC 453"
 
 
-def rval(e: asts.Expr) -> List[Insn]:
+def rval(e: asts.Expr) -> list[Insn]:
     match e:
         case asts.BinaryOp():
             return rval_BinaryOp(e)
@@ -204,7 +205,7 @@ def rval(e: asts.Expr) -> List[Insn]:
             assert False, f"rval() not implemented for {type(e)}"
 
 
-def rval_BinaryOp(e: asts.BinaryOp) -> List[Insn]:
+def rval_BinaryOp(e: asts.BinaryOp) -> list[Insn]:
     match e.op.kind:
         case "+":
             pass
@@ -235,7 +236,7 @@ def rval_BinaryOp(e: asts.BinaryOp) -> List[Insn]:
     pass
 
 
-def rval_UnaryOp(e: asts.UnaryOp) -> List[Insn]:
+def rval_UnaryOp(e: asts.UnaryOp) -> list[Insn]:
     match e.op.kind:
         case "-":
             pass
@@ -246,9 +247,9 @@ def rval_UnaryOp(e: asts.UnaryOp) -> List[Insn]:
     pass
 
 
-def rval_and(e: asts.BinaryOp) -> List[Insn]:
+def rval_and(e: asts.BinaryOp) -> list[Insn]:
     pass
 
 
-def rval_or(e: asts.BinaryOp) -> List[Insn]:
+def rval_or(e: asts.BinaryOp) -> list[Insn]:
     pass

@@ -34,6 +34,7 @@ class Execution:
                 assert lab in self.labels, f"Undefined label: {lab}"
 
         self.verbose = False
+        self.debug_step = False
 
     def __repr__(self):
         return f"Execution({self.insns}, {self.stack}, {self.regs})"
@@ -44,7 +45,7 @@ class Execution:
             caller = "N/A"
         else:
             start = self.memory[self.regs["FP"] + 1]
-            caller = self.memory[start : self.regs["FP"]]
+            caller = self.memory[start: self.regs["FP"]]
         print(f"      stack ={self.stack}")
         print(f"      regs  ={self.regs}")
         print(f'      frame ={self.memory[self.regs["FP"] : self.regs["SP"]]}')
@@ -176,14 +177,14 @@ class Execution:
             case SaveEvalStack():
                 sp = self.regs["SP"]
                 size = len(self.stack)
-                self.memory[sp : sp + size + 1] = self.stack + [size]
+                self.memory[sp: sp + size + 1] = self.stack + [size]
                 self.regs["SP"] += size + 1
                 self.stack = []
                 self.regs["PC"] += 1
             case RestoreEvalStack():
                 sp = self.regs["SP"]
                 size = self.memory[sp - 1]
-                tmp = self.memory[sp - size - 1 : sp - 1]
+                tmp = self.memory[sp - size - 1: sp - 1]
                 self.regs["SP"] -= size + 1
                 self.stack = tmp + self.stack
                 self.regs["PC"] += 1
@@ -199,6 +200,8 @@ class Execution:
             self.dump_state()
         o = self
         while o is not None:
+            if self.debug_step:
+                input("Press enter to continue next step")
             o = self.step()
             if self.verbose:
                 self.dump_state()
