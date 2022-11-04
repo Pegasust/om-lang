@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Iterable
+from typing import Optional, TypeVar, Iterable, Union
 import error
 import asts
 import symbols
@@ -117,9 +117,12 @@ def rval_CallExpr(ast: asts.CallExpr) -> list[Insn]:
 
 
 def _AssignStmt(ast: asts.AssignStmt) -> list[Insn]:
-    # handle ast.lhs
-    # handle ast.rhs
-    pass
+    # TODO: Basically this becomes lval
+    return flatten_list((
+        lval(ast.lhs),
+        rval(ast.rhs),
+        [Store()],
+    ))
 
 
 def _PrintStmt(ast: asts.PrintStmt) -> list[Insn]:
@@ -143,6 +146,13 @@ def _WhileStmt(ast: asts.WhileStmt, parent_dealloc: str) -> list[Insn]:
     pass
 
 
+def _ctrl_lit(literal: bool, label: str, sense: bool) -> list[Insn]:
+    if literal == sense:
+        return [Jump(label)]
+    else:
+        return []
+
+
 def control(e: asts.Expr, label: str, sense: bool) -> list[Insn]:
     match e:
         case asts.BinaryOp():
@@ -150,31 +160,69 @@ def control(e: asts.Expr, label: str, sense: bool) -> list[Insn]:
         case asts.UnaryOp():
             return control_UnaryOp(e, label, sense)
         case asts.TrueLiteral():
-            pass
+            return _ctrl_lit(True, label, sense)
         case asts.FalseLiteral():
-            pass
-        case _:
-            # handle other control expressions
-            pass
+            return _ctrl_lit(False, label, sense)
+        case asts.IdExpr():
+            return control_IdExpr(e, label, sense)
     pass
 
 
+def control_IdExpr(e: asts.IdExpr, label: str, sense: bool) -> list[Insn]:
+    if sense:
+        return flatten_list((
+            rval(e),
+            [JumpIfNotZero(label)]
+        ))
+    else:
+        return flatten_list((
+            rval(e),
+            [JumpIfZero(label)]
+        ))
+
+
+def _ctrl_bin(left: asts.Expr, right: asts.Expr, op_kind: str, label: str, sense: bool) -> list[Insn]:
+    match (op_kind, sense):
+        case "and", True:
+            return flatten_list((
+                ,
+            ))
+        case "or", True:
+            return flatten_list((
+                ,
+            ))
+        case "and", False:
+            return _ctrl_bin(left, right, "or", True)
+        case "or", False:
+            return flatten_list((
+                ,
+            ))
+
+
 def control_BinaryOp(e: asts.BinaryOp, label: str, sense: bool) -> list[Insn]:
-    match e.op.kind:
-        case "and":
-            pass
+    match (e.op.kind, sense):
+        case "and", False:
+            return flatten_list((
+                control(e.left, label, False),
+            ))
         case "or":
             pass
-        case _:
-            # handle other control binary operators
+        case ">":
             pass
+        case ">=":
+            pass
+        case "<":
+            pass
+        case "<=":
+            pass
+
     pass
 
 
 def control_UnaryOp(e: asts.UnaryOp, label: str, sense: bool) -> list[Insn]:
     match e.op.kind:
         case "not":
-            pass
+            return control(e.expr, label, not sense)
         case _:
             assert False, f"control_UnaryOp() not implemented for {e.op.kind}"
     pass
