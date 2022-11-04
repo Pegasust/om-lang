@@ -85,35 +85,55 @@ def _Stmt(ast: asts.Stmt, dealloc_label: str) -> list[Insn]:
 
 def rval_CallExpr(ast: asts.CallExpr) -> list[Insn]:
     assert isinstance(ast.fn, asts.IdExpr)
+    retval = flatten_list(
+        rval(arg) for arg in reversed(ast.args)
+    )
+    # TODO: for register-based machines, maybe call SaveEvalStack on full
+    # or allocate the space for the whole program first
+    retval.extend(stack_malloc(1)[1])  # ret
+    # , SP', FP'. Note that SP not changed
+    retval.extend([PushSP(0, "Back up SP"), PushFP(0, "Back up FP")])
+    retval.extend(stack_malloc(2)[1])  # the 2 reserving spaces
+    retval.append(SaveEvalStack())
+
+    # Assign this FP
+    retval.extend([
+        PushSP(-4, "Set FP to be at offset 0"),
+        PopFP(),
+    ])
+
+    # Call the function
+    retval.extend(rval(ast.fn))
+    retval.append(Call(f"Call {ast.fn.id.token.value}"))
+
+    # Epilogue:
+    retval.extend(flatten_list((
+        [RestoreEvalStack()],
+        # pop the empty elements
+        stack_free(3),
+        [PopFP("Restore the old FP")],
+        # retain the return value as offset-1 from the original stack pointer
+        # TODO: This must later be popped out to serve as rval
+        stack_emplace(),
+        # dealloc all args
+        stack_free(len(ast.args)),
+        # return value as rval
+        stack_pop_retrieve(),
+    )))
+
+    return retval
+
+
+def _lval_offset(sp_offset: int) -> list[Insn]:
+    return [PushSP(sp_offset)]
+
+
+def assign(sp_offset: int, rval_insn: list[Insn]) -> list[Insn]:
     return flatten_list((
-        flatten_list(rval(arg) for arg in ast.args),
-        [
-            SaveEvalStack(),
-            PushSP(0),
-            PushFP(0),
-            # SP, FP; [[RET]]
-            #          ^   ^
-            #         SP0 SP1
-        ],
-        rval(ast.fn),
-        [Call()],
-        [PopFP(), PopSP()] if ast.fn.semantic_type == symbols.VoidType\
-        else flatten_list(([
-            PopFP()
-        ], stack_pop_retrieve(), [
-            # SP, RET
-            Swap(),
-            PopSP()
-        ])),
-        [
-            RestoreEvalStack()
-            # [[...], ARGS..., [RET]]
-            # need to rid of ARGS
-        ]
+        _lval_offset(sp_offset),
+        rval_insn,
+        [Store()],
     ))
-    for i, arg in enumerate(ast.args):
-        pass  # handle arg
-    # handle return value
 
 
 def _AssignStmt(ast: asts.AssignStmt) -> list[Insn]:
@@ -225,7 +245,6 @@ def control_UnaryOp(e: asts.UnaryOp, label: str, sense: bool) -> list[Insn]:
             return control(e.expr, label, not sense)
         case _:
             assert False, f"control_UnaryOp() not implemented for {e.op.kind}"
-    pass
 
 
 def _CallStmt(ast: asts.CallStmt) -> list[Insn]:
@@ -233,12 +252,17 @@ def _CallStmt(ast: asts.CallStmt) -> list[Insn]:
     # TODO: Disregard return optimization
     return flatten_list((
         rval_CallExpr(ast.call),
-        [] if ast.call.semantic_type == symbols.VoidType else stack_pop()
+        # Disregard return value
+        stack_pop()
     ))
 
 
 def option_unwrap_or(opt: Optional[T], default: T) -> T:
     return opt if opt is not None else default
+
+
+def stack_malloc(atomic_sz: int) -> tuple[int, list[Insn]]:
+    return (atomic_sz, [PushImmediate(0)] * atomic_sz)
 
 
 def stack_calloc(ty: symbols.Type, elem_cnt: int, imm: Optional[int] = None) \
@@ -253,7 +277,7 @@ def stack_free(atomic_sz: int) -> list[Insn]:
 
 def _CompoundStmt(ast: asts.CompoundStmt, parent_dealloc: str) -> list[Insn]:
     my_dealloc_label = scope_label(ast.local_scope)
-    args_size, isns_calloc = stack_calloc(symbols.IntType(), len(ast.decls))
+    args_size, isns_calloc = stack_malloc(len(ast.decls))
 
     stmts = (_Stmt(stmt, my_dealloc_label) for stmt in ast.stmts)
     isns_stmts = flatten_list(stmt for stmt in stmts)
@@ -382,7 +406,11 @@ def lval(e: asts.Expr) -> list[Insn]:
 
 
 def lval_id(e: asts.IdExpr) -> list[Insn]:
-    return [PushImmediate(e.id.symbol.offset)]
+    return [
+        PushFP(0),
+        PushImmediate(e.id.symbol.offset),
+        Add(),
+    ]
 
 
 def lval_array_cell(e: asts.ArrayCell) -> list[Insn]:
