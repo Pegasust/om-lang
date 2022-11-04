@@ -40,12 +40,9 @@ from vm import (
     Swap,
 )
 
-BAIL = 1             # Is bail
-NO_BAIL = 0          # Is not bail
-BAIL_FP_OFFSET = 2   # Offset from frame pointer that stores BAIL status
-RA_FP_OFFSET = 0     # Offset from frame pointer that stores the return address
-RET_FP_OFFSET = -1   # Offset from frame pointer that stores the return value
-FP_CALLER_OFFSET = 1  # Offset from frame pointer that stores the caller's addr
+BAIL = 1
+NO_BAIL = 0
+
 
 T = TypeVar('T')
 
@@ -62,16 +59,7 @@ def generate(ast: asts.Program) -> list[Insn]:
 def _Program(ast: asts.Program) -> list[Insn]:
     # for decl in ast.decls:
     #     f: list[Insn] = _FuncDecl(decl)
-    main: Optional[asts.FuncDecl] = None
-    for func_decl in ast.decls:
-        if func_decl.id.token.value == "main":
-            main = func_decl
-    return flatten_list((
-        _cmt("=== start ==="),
-        callexpr_bare(main.id, [], cmt="call main") if main else [],
-        _cmt("=== func decls ==="),
-        *(_FuncDecl(decl) for decl in ast.decls)
-    ))
+    return flatten_list(_FuncDecl(decl) for decl in ast.decls)
 
 
 def _Stmt(ast: asts.Stmt, dealloc_label: str) -> list[Insn]:
@@ -95,87 +83,51 @@ def _Stmt(ast: asts.Stmt, dealloc_label: str) -> list[Insn]:
         assert False, f"_Stmt() not implemented for {type(ast)}"
 
 
-def callexpr_bare(func_id: asts.Id, args: list[asts.Expr], cmt=None):
-    fn_type = func_id.symbol.get_type()
-    assert isinstance(fn_type, symbols.FuncType)
-    param_size = fn_type.param_size
-    func_name = func_id.token.value
-    alloc_sz = 5 + param_size
-
-    return flatten_list((
-        _cmt(cmt),
-        _cmt(f"callexpr_bare: omega/{func_name}"),
-
-        stack_malloc(alloc_sz, cmt=f"Alloc fsize({alloc_sz}) for args & reserved")[1],
-        [SaveEvalStack()],
-        # TODO: We need to merge this with the stack malloc for RET FP RA BAIL
-        *(assign(-2-i, rval(arg), cmt="Assign arg to memstack")
-          for i, arg in enumerate(args)),
-
-        _cmt("Initialize FP and BAIL"),
-        assign(BAIL_FP_OFFSET, [PushImmediate(NO_BAIL)], cmt="BAIL: NO_BAIL"),
-        [PushFP(0, comment="Store our old FP")],
-
-        _cmt("Assign this FP = SP - 4"),
-        [
-            PushSP(-4, "Set FP to new function scope memstack location"),
-            PopFP(),
-        ],
-
-        _cmt("Finish storing the caller's FP to the callee's frame"), [
-            PushSP(0),
-            Swap(),
-            Store(),
-        ],
-
-        _cmt(f"Call {func_name}"),
-        [
-            PushLabel(func_label(func_id)),
-            Call(),
-        ],
-
-        _cmt("Epilogue: Return FP to caller, and RET as rval"),
-        _cmt("Retrieve ideal stack for processing"), [
-            *retrieve(RET_FP_OFFSET, "Retrieve RET"),
-        ],
-        _cmt("Set FP to caller"), [
-            *retrieve(FP_CALLER_OFFSET),
-            PopFP(),
-        ],
-
-        [RestoreEvalStack()],
-        stack_free(alloc_sz, cmt=f"Dealloc fsize ({alloc_sz})"),
-
-        _cmt("RET as rval"), [
-            # We have already put RET right after FP_CALLER
-            # Since we popped FP_CALLER once, the thing left on the stack
-            # is the return value
-        ]
-
-    ))
-
-
 def rval_CallExpr(ast: asts.CallExpr) -> list[Insn]:
     assert isinstance(ast.fn, asts.IdExpr)
-    return callexpr_bare(ast.fn.id, ast.args)
-
-
-def _lval_offset(fp_offset: int) -> list[Insn]:
-    return [PushFP(fp_offset, comment = f"lval_offset: {fp_offset}")]
-
-
-def retrieve(fp_offset: int, cmt: Optional[str] = None) -> list[Insn]:
+    # memstack: [...,arg2(-4),arg1(-3),arg0(-2),_(-1),SP(0),FP(1),_(2),_(3),var0(4),var(5)]
     return flatten_list((
-        [Noop(comment=f"Retrieve fp offset: {fp_offset}"), Noop(comment=cmt)],
-        [PushFP(fp_offset)],
-        [Load()]
+        # Push them in reverse order so that the negative offset makes sense
+        flatten_list(rval(arg) for arg in reversed(ast.args)),
+        # Reserved: -1
+        stack_malloc(1)[1],
+        [
+            SaveEvalStack(),
+            PushSP(0),
+            PushFP(0),
+            # SP, FP; [[RET]]
+            #          ^   ^
+            #         SP0 SP1
+        ],
+        stack_malloc(2)[1],
+        # prepare the function label to be called
+        rval(ast.fn),
+        [Call()],
+        [PopFP(), PopSP()] if ast.fn.semantic_type == symbols.VoidType\
+        else flatten_list(([
+            PopFP()
+        ], stack_pop_retrieve(), [
+            # SP, RET
+            Swap(),
+            PopSP()
+        ])),
+        [
+            RestoreEvalStack()
+            # [[...], ARGS..., [RET]]
+            # need to rid of ARGS
+        ]
     ))
+    for i, arg in enumerate(ast.args):
+        pass  # handle arg
+    # handle return value
 
 
-def assign(fp_offset: int, rval_insn: list[Insn], cmt: Optional[str] = None) -> list[Insn]:
+def _lval_offset(sp_offset: int) -> list[Insn]:
+    return [PushSP(sp_offset)]
+
+def assign(sp_offset: int, rval_insn: list[Insn]) -> list[Insn]:
     return flatten_list((
-        [Noop(comment=cmt)],
-        _lval_offset(fp_offset),
+        _lval_offset(sp_offset),
         rval_insn,
         [Store()],
     ))
@@ -193,14 +145,12 @@ def _AssignStmt(ast: asts.AssignStmt) -> list[Insn]:
 def _PrintStmt(ast: asts.PrintStmt) -> list[Insn]:
     # handle ast.expr
     return flatten_list((
-        _cmt("Print"),
         rval(ast.expr),
         [Print()],
     ))
 
 
 def _IfStmt(ast: asts.IfStmt, parent_dealloc: str) -> list[Insn]:
-    assert False, "IfStmt not yet supported"
     # handle ast.expr
     # handle ast.thenStmt
     # handle ast.elseStmt
@@ -208,7 +158,6 @@ def _IfStmt(ast: asts.IfStmt, parent_dealloc: str) -> list[Insn]:
 
 
 def _WhileStmt(ast: asts.WhileStmt, parent_dealloc: str) -> list[Insn]:
-    assert False, "WhileStmt not yet supported"
     # handle ast.expr
     # handle ast.stmt
     pass
@@ -233,8 +182,7 @@ def control(e: asts.Expr, label: str, sense: bool) -> list[Insn]:
             return _ctrl_lit(False, label, sense)
         case asts.IdExpr():
             return control_IdExpr(e, label, sense)
-        case _:
-            assert False, f"Missing handler for {e}"
+    pass
 
 
 def control_IdExpr(e: asts.IdExpr, label: str, sense: bool) -> list[Insn]:
@@ -250,52 +198,42 @@ def control_IdExpr(e: asts.IdExpr, label: str, sense: bool) -> list[Insn]:
         ))
 
 
-def _ctrl_and(left: asts.Expr, right: asts.Expr, label: str, cond: bool,
-              sense: bool) -> list[Insn]:
-    match cond:
-        case True:
-            # Template of TRUE in and
-            fall_label=control_label(
-                [left, right], f"and-{label}-{cond}-{sense}")
+def _ctrl_bin(left: asts.Expr, right: asts.Expr, op_kind: str, label: str, sense: bool) -> list[Insn]:
+    match (op_kind, sense):
+        case "and", True:
             return flatten_list((
-                control(left, fall_label, not sense),
-                control(right, label, sense),
-                [Label(fall_label)],
+                ,
             ))
-        case False:
+        case "or", True:
             return flatten_list((
-                control(left, label, not sense),
-                control(right, label, not sense)
+                ,
             ))
-
-
-def _ctrl_bin(left: asts.Expr, right: asts.Expr, op_kind: str, label: str,
-              sense: bool) -> list[Insn]:
-    match op_kind:
-        case "and":
-            return _ctrl_and(left, right, label, sense, True)
-        case "or":
-            return _ctrl_and(left, right, label, not sense, False)
-        case _:
-            assert False, f"Unreachable: bad op_kind: {op_kind}"
+        case "and", False:
+            return _ctrl_bin(left, right, "or", True)
+        case "or", False:
+            return flatten_list((
+                ,
+            ))
 
 
 def control_BinaryOp(e: asts.BinaryOp, label: str, sense: bool) -> list[Insn]:
     match (e.op.kind, sense):
-        case "and":
-            return _ctrl_bin(e.left, e.right, "and", label, sense)
+        case "and", False:
+            return flatten_list((
+                control(e.left, label, False),
+            ))
         case "or":
-            return _ctrl_bin(e.left, e.right, "or", label, sense)
+            pass
         case ">":
-            assert False, "Not yet supported"
+            pass
         case ">=":
-            assert False, "Not yet supported"
+            pass
         case "<":
-            assert False, "Not yet supported"
+            pass
         case "<=":
-            assert False, "Not yet supported"
-        case _:
-            assert False, f"Missing handler for {e.op.kind}"
+            pass
+
+    pass
 
 
 def control_UnaryOp(e: asts.UnaryOp, label: str, sense: bool) -> list[Insn]:
@@ -304,15 +242,15 @@ def control_UnaryOp(e: asts.UnaryOp, label: str, sense: bool) -> list[Insn]:
             return control(e.expr, label, not sense)
         case _:
             assert False, f"control_UnaryOp() not implemented for {e.op.kind}"
+    pass
 
 
 def _CallStmt(ast: asts.CallStmt) -> list[Insn]:
     # handle ast.call
-    # HACK: Disregard return optimization
+    # TODO: Disregard return optimization
     return flatten_list((
         rval_CallExpr(ast.call),
-        # Disregard return value
-        stack_pop()
+        [] if ast.call.semantic_type == symbols.VoidType else stack_pop()
     ))
 
 
@@ -320,92 +258,72 @@ def option_unwrap_or(opt: Optional[T], default: T) -> T:
     return opt if opt is not None else default
 
 
-def stack_malloc(atomic_sz: int, cmt = None) -> tuple[int, list[Insn]]:
-    return (atomic_sz, [Noop(cmt)] + [PushImmediate(0)] * atomic_sz)
+def stack_malloc(atomic_sz: int) -> tuple[int, list[Insn]]:
+    return (atomic_sz, [PushImmediate(0)] * atomic_sz)
 
 
 def stack_calloc(ty: symbols.Type, elem_cnt: int, imm: Optional[int] = None) \
         -> tuple[int, list[Insn]]:
-    atomic_sz=(ty.size() * elem_cnt)
+    atomic_sz = (ty.size() * elem_cnt)
     return (atomic_sz, [PushImmediate(option_unwrap_or(imm, 0))] * atomic_sz)
 
 
-def stack_free(atomic_sz: int, cmt = None) -> list[Insn]:
-    return [Noop(cmt)] + [Pop()] * atomic_sz
+def stack_free(atomic_sz: int) -> list[Insn]:
+    return [Pop()] * atomic_sz
 
 
-def _cmt(cmt: Optional[str]) -> list[Insn]:
-    return [Noop(line.strip()) for line in cmt.strip().splitlines()] \
-        if cmt else []
+def _CompoundStmt(ast: asts.CompoundStmt, parent_dealloc: str) -> list[Insn]:
+    my_dealloc_label = scope_label(ast.local_scope)
+    args_size, isns_calloc = stack_malloc(len(ast.decls))
 
+    stmts = (_Stmt(stmt, my_dealloc_label) for stmt in ast.stmts)
+    isns_stmts = flatten_list(stmt for stmt in stmts)
 
-def _CompoundStmt(ast: asts.CompoundStmt, parent_dealloc: str, cmt = None) -> list[Insn]:
-    # TODO: Revise to v2 func call
-    my_dealloc_label=f"dealloc-{scope_label(ast.local_scope)}"
+    isns_return = _ReturnStmt(ast.return_stmt, my_dealloc_label) \
+        if ast.return_stmt else stack_emplace(NO_BAIL)
 
-    stmts=(_Stmt(stmt, my_dealloc_label) for stmt in ast.stmts)
-    isns_stmts=flatten_list(stmt for stmt in stmts)
+    isns_dealloc_lab = [Label(my_dealloc_label)]
+    isns_dealloc = stack_free(args_size)
 
-    isns_return=_ReturnStmt(ast.return_stmt, my_dealloc_label) \
-        if ast.return_stmt else []
-
-    isns_bail=flatten_list((
-        stack_peek(),
+    isns_bail = flatten_list((
+        stack_pop_retrieve(),
         [
             JumpIfNotZero(parent_dealloc)
         ]
     ))
 
-    # TODO: func call allocate all space needed by all variables
-
     return flatten_list((
-        _cmt("""
-        ============
-        Symbol table
-        ============
-        """),
-        _cmt("\n".join(
-            f"{s.id.token.value}: offset {s.id.symbol.offset}"
-            for s in ast.decls)),
-        _cmt("""
-        ============
-        """),
+        isns_calloc,
         isns_stmts,
         isns_return,
-        [Label(my_dealloc_label)],
+        isns_dealloc_lab,
+        isns_dealloc,
         isns_bail
     ))
 
 
-def _FuncDecl(ast: asts.FuncDecl) -> list[Insn]:
-    # TODO: Revise to v2 func call
-
-    # TODO: func decl allocate all the space necessary for all vars
-    func_type=ast.id.symbol.get_type()
-    assert isinstance(func_type, symbols.FuncType)
-    frame_size=func_type.frame_size
-    func_done=f"{func_label(ast.id)}-bail"
+def _FuncDecl(ast: asts.FuncDecl):
+    # handle ast.id
+    label_instructions = [Label(func_label(ast.id))]
     # handle ast.body
     # ast.params is handled by callee
-    ret_isns=[
+    func_done = f"{func_label(ast.id)}-bail"
+    body_instructions = _CompoundStmt(ast.body, func_done)
+    bail_isns = [
+        Label(func_done),
+        # consume the BAIL status. Guaranteed to have this status
+        stack_pop()
+    ]
+    # Now we're guaranteed to have FP, SP, RA; [[RET]]
+    ret_isns = [
         JumpIndirect()
     ]
 
     return flatten_list((
-        [Label(func_label(ast.id), "Function label")],
-        assign(RA_FP_OFFSET, [Swap()], cmt="Store RA passed in from Call()@FP+1"),
-        stack_malloc(frame_size, "allocate func vars")[1],
-        [SaveEvalStack("Allocate func vars to memstack")],
-        _CompoundStmt(ast.body, func_done, cmt="The main exec of func"),
-        [
-            Label(func_done),
-        ],
-        [RestoreEvalStack("Dealloc func vars from memstack")],
-        stack_free(frame_size),
-        retrieve(RA_FP_OFFSET, "Retrieve RA to return out of function"),
-        [
-            JumpIndirect(comment="Function return (might be implicit)")
-        ]
+        label_instructions,
+        bail_isns,
+        body_instructions,
+        ret_isns
     ))
 
 
@@ -443,34 +361,17 @@ def stack_push() -> list[Insn]:
     ]
 
 
-def stack_peek(cmt=None) -> list[Insn]:
-    return flatten_list((
-        _cmt(cmt),
-        [
-            Noop("stack peek"),
-            PushSP(-1),
-            Load()
-        ],
-
-    ))
-
-
-def stack_pop_retrieve(cmt=None) -> list[Insn]:
+def stack_pop_retrieve() -> list[Insn]:
     return [
-        *_cmt(cmt),
-        PushSP(-1),
+        PushSP(-1, "Restore RET"),
         Load(),
-        PushSP(-1, "Decrement SP to pop"),
+        PushSP(-1, "Decrement SP to pop RET"),
         PopSP(),
     ]
 
 
-def stack_pop(cmt: Optional[str] = None) -> list[Insn]:
-    return [
-        Noop(comment=cmt),
-        PushSP(-1, "Decrement SP"),
-        PopSP()
-    ]
+def stack_pop() -> list[Insn]:
+    return [PushSP(-1, "Decrement SP"), PopSP()]
 
 
 def _ReturnStmt(ast: asts.ReturnStmt, dealloc_label: str) -> list[Insn]:
@@ -501,14 +402,15 @@ def lval(e: asts.Expr) -> list[Insn]:
             assert False, f"lval() not implemented for {type(e)}"
 
 
-def lval_id(e: asts.IdExpr, cmt=None) -> list[Insn]:
+def lval_id(e: asts.IdExpr) -> list[Insn]:
     return [
-        Noop(cmt),
-        PushFP(e.id.symbol.offset, comment=f"lval_id: {e.id.symbol.offset}")
+        PushSP(0),
+        PushImmediate(e.id.symbol.offset),
+        Add(),
     ]
 
 
-def lval_array_cell(_: asts.ArrayCell) -> list[Insn]:
+def lval_array_cell(e: asts.ArrayCell) -> list[Insn]:
     assert False, "Arrays are not part of codegen in CSC 453"
     # find the base pointer of array cell
     # then find the extracted value of the expr
@@ -535,18 +437,11 @@ def _TypeString(ty: symbols.Type, coord: asts.Coord):
 
 
 def func_label(e: asts.Id) -> str:
-    return f"{e.token.value}{_TypeString(e.symbol.get_type(), e.token.coord)}"
+    return _TypeString(e.symbol.get_type(), e.token.coord)
 
 
 def scope_label(s: symbols.Scope) -> str:
-    return f"scope_{hex(hash(id(s)))}"
-
-
-def control_label(args: list[asts.Expr], keyword: Optional[str]) -> str:
-    args_id = [hex(hash(id(e))) for e in args]
-    args_fmt = "_".join(args_id)
-    kw = "" if not keyword else f"_{keyword}"
-    return f"control{kw}_{args_fmt}"
+    return f"scope_${hex(hash(id(s)))}"
 
 
 def rval(e: asts.Expr) -> list[Insn]:
@@ -558,6 +453,7 @@ def rval(e: asts.Expr) -> list[Insn]:
         case asts.CallExpr():
             return rval_CallExpr(e)
         case asts.IdExpr():
+            # if move, then have to swap all the way up
             match e.semantic_type:
                 case symbols.FuncType():
                     # rval: function "pointer"
@@ -571,13 +467,13 @@ def rval(e: asts.Expr) -> list[Insn]:
                 case symbols.PhonyType():
                     error.error("PhonyType encountered.", e.id.token.coord)
                 case _:
-                    offset = e.id.symbol.offset
-                    name = e.id.token.value
                     return [
-                        PushFP(offset, f"Accessing {name}@{offset}"),
-                        Load()
+                        SaveEvalStack(),
+
+                        RestoreEvalStack()
                     ]
-        case asts.ArrayCell(arr=_, idx=_):
+
+        case asts.ArrayCell(arr, idx):
             error.error("rval(ArrayCell) is currently not supported.", e.coord)
         case asts.IntLiteral(token=token):
             return [PushImmediate(int(token.value))]
@@ -590,69 +486,54 @@ def rval(e: asts.Expr) -> list[Insn]:
 
 
 def rval_BinaryOp(e: asts.BinaryOp) -> list[Insn]:
-    rval_both = (rval(e.left), rval(e.right))
+    assert False, "rval not supported yet"
     match e.op.kind:
         case "+":
-            return flatten_list((*rval_both, [Add()]))
+            pass
         case "-":
-            return flatten_list((*rval_both, [Sub()]))
+            pass
         case "*":
-            return flatten_list((*rval_both, [Mul()]))
+            pass
         case "/":
-            return flatten_list((*rval_both, [Div()]))
+            pass
         case "<":
-            return flatten_list((*rval_both, [LessThan()]))
+            pass
         case "<=":
-            return flatten_list((*rval_both, [LessThanEqual()]))
+            pass
         case ">":
-            return flatten_list((*rval_both, [GreaterThan()]))
+            pass
         case ">=":
-            return flatten_list((*rval_both, [GreaterThanEqual()]))
+            pass
         case "==":
-            return flatten_list((*rval_both, [Equal()]))
+            pass
         case "!=":
-            return flatten_list((*rval_both, [NotEqual()]))
+            pass
         case "and":
             return rval_and(e)
         case "or":
             return rval_or(e)
         case _:
             assert False, f"rval_BinaryOp() not implemented for {e.op}"
+    pass
 
 
 def rval_UnaryOp(e: asts.UnaryOp) -> list[Insn]:
+    assert False, "rval not supported yet"
     match e.op.kind:
         case "-":
-            return flatten_list((rval(e.expr), [Negate()]))
+            pass
         case "not":
-            return flatten_list((rval(e.expr), [Not()]))
+            pass
         case _:
             assert False, f"rval_UnaryOp() not implemented for {e.op}"
+    pass
 
 
 def rval_and(e: asts.BinaryOp) -> list[Insn]:
-    jump_label = control_label([e], "rval_and")
-    return flatten_list((
-        control_BinaryOp(e, jump_label, True),
-        [
-            PushImmediate(0),
-            Jump(f"{jump_label}-end"),
-            Label(jump_label),
-            PushImmediate(1),
-            Label(f"{jump_label}-end")
-        ]
-    ))
+    assert False, "rval not supported yet"
+    pass
 
 
 def rval_or(e: asts.BinaryOp) -> list[Insn]:
-    jump_label = control_label([e], "rval_or")
-    return flatten_list((
-        control_BinaryOp(e, jump_label, True),
-        [
-            PushImmediate(0),
-            Jump(f"{jump_label}-end"),
-            Label(jump_label),
-            PushImmediate(1),
-            Label(f"{jump_label}-end")
-        ]
-    ))
+    assert False, "rval not supported yet"
+    pass

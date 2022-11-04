@@ -1,0 +1,446 @@
+Noop '=== start ==='
+Noop 'call main'
+Noop 'callexpr_bare: omega/main'
+PushImmediate 0'alloc RET'
+PushSP 0'Back up SP'
+PushFP 0'Back up FP'
+PushImmediate 0"alloc FP', RA"
+PushImmediate 0"alloc FP', RA"
+SaveEvalStack 'Dump previous func stack to memstack'
+PushSP -4'Set FP to be at offset 0, relative to new function scope'
+PopFP 
+PushLabel 'main____ret__void__''Begin calling main'
+Call 'Call main'
+RestoreEvalStack 
+Pop 
+Pop 
+Pop 
+PopFP 'Restore the old FP'
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+Noop '=== func decls ==='
+Label 'f2__int_int_int__ret__int__''Function label'
+Noop 'Store RA passed in from Call()@FP+1'
+PushFP 1
+Store 
+Noop '============'
+Noop 'Symbol table'
+Noop '============'
+Noop 'm: offset 4'
+Noop '============'
+PushFP 0
+PushImmediate 4
+Add 
+PushFP -2'Accessing x@-2'
+Load 
+PushFP -3'Accessing y@-3'
+Load 
+Add 
+Store 
+PushFP 0
+PushImmediate 4
+Add 
+PushFP 4'Accessing m@4'
+Load 
+PushFP -4'Accessing z@-4'
+Load 
+Mul 
+Store 
+PushFP 0
+PushImmediate 4
+Add 
+PushFP 4'Accessing m@4'
+Load 
+PushImmediate 2
+Div 
+Store 
+PushFP 4'Accessing m@4'
+Load 
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+PushImmediate 1
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+PushLabel 'dealloc-scope_0x7f950f5eead0'
+JumpIndirect 
+Label 'dealloc-scope_0x7f950f5eead0'
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+JumpIfNotZero 'f2__int_int_int__ret__int__-bail'
+Label 'f2__int_int_int__ret__int__-bail'
+Noop 'Consume the BAIL status, protocol of early return from nested scope'
+PushSP -1'Decrement SP'
+PopSP 
+Noop 'Retrieve fp offset: 1'
+Noop 'Retrieve RA to return out of function'
+PushFP 1
+Load 
+JumpIndirect 'Function return (might be implicit)'
+Label 'foo__int_int_int_int_int_int__ret__int__''Function label'
+Noop 'Store RA passed in from Call()@FP+1'
+PushFP 1
+Store 
+Noop '============'
+Noop 'Symbol table'
+Noop '============'
+Noop 'm: offset 4'
+Noop '============'
+PushFP 0
+PushImmediate -2
+Add 
+PushFP -2'Accessing a@-2'
+Load 
+PushFP -3'Accessing b@-3'
+Load 
+Add 
+Store 
+PushFP 0
+PushImmediate -3
+Add 
+PushFP -3'Accessing b@-3'
+Load 
+PushFP -2'Accessing a@-2'
+Load 
+Add 
+Store 
+Noop '============'
+Noop 'Symbol table'
+Noop '============'
+Noop 'a: offset 5'
+Noop '============'
+PushFP 0
+PushImmediate 5
+Add 
+PushImmediate 100
+Store 
+PushFP 0
+PushImmediate -4
+Add 
+PushFP -4'Accessing c@-4'
+Load 
+PushFP 5'Accessing a@5'
+Load 
+Add 
+Store 
+Noop '============'
+Noop 'Symbol table'
+Noop '============'
+Noop 'b: offset 6'
+Noop '============'
+PushFP 0
+PushImmediate 6
+Add 
+PushImmediate 200
+Store 
+PushFP 0
+PushImmediate -5
+Add 
+PushFP -5'Accessing d@-5'
+Load 
+PushFP 6'Accessing b@6'
+Load 
+Add 
+Store 
+PushFP 0
+PushImmediate -5
+Add 
+PushFP -5'Accessing d@-5'
+Load 
+PushImmediate 2
+Mul 
+Store 
+PushFP 0
+PushImmediate 6
+Add 
+PushImmediate 3
+Store 
+PushFP 0
+PushImmediate -5
+Add 
+PushFP -5'Accessing d@-5'
+Load 
+PushFP 6'Accessing b@6'
+Load 
+Div 
+Store 
+Noop '============'
+Noop 'Symbol table'
+Noop '============'
+Noop 'a: offset 7'
+Noop 'b: offset 8'
+Noop 'z: offset 9'
+Noop '============'
+PushFP 0
+PushImmediate 7
+Add 
+PushImmediate 4
+Store 
+PushFP 0
+PushImmediate 8
+Add 
+PushImmediate 3
+Store 
+PushFP 0
+PushImmediate 9
+Add 
+Noop 'None'
+Noop 'callexpr_bare: omega/f2'
+PushFP -6'Accessing e@-6'
+Load 
+PushFP 8'Accessing b@8'
+Load 
+PushFP 7'Accessing a@7'
+Load 
+PushImmediate 0'alloc RET'
+PushSP 0'Back up SP'
+PushFP 0'Back up FP'
+PushImmediate 0"alloc FP', RA"
+PushImmediate 0"alloc FP', RA"
+SaveEvalStack 'Dump previous func stack to memstack'
+PushSP -4'Set FP to be at offset 0, relative to new function scope'
+PopFP 
+PushLabel 'f2__int_int_int__ret__int__''Begin calling f2'
+Call 'Call f2'
+RestoreEvalStack 
+Pop 
+Pop 
+Pop 
+PopFP 'Restore the old FP'
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+Pop 
+Pop 
+Pop 
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+Store 
+PushFP 0
+PushImmediate -6
+Add 
+PushFP -6'Accessing e@-6'
+Load 
+PushFP 9'Accessing z@9'
+Load 
+Add 
+Store 
+PushImmediate 0
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+Label 'dealloc-scope_0x7f950f5eece0'
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+JumpIfNotZero 'dealloc-scope_0x7f950f5ec3d0'
+PushImmediate 0
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+Label 'dealloc-scope_0x7f950f5ec3d0'
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+JumpIfNotZero 'dealloc-scope_0x7f950f5b3310'
+PushImmediate 0
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+Label 'dealloc-scope_0x7f950f5b3310'
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+JumpIfNotZero 'dealloc-scope_0x7f950f5b3160'
+PushFP 0
+PushImmediate 4
+Add 
+PushFP -2'Accessing a@-2'
+Load 
+PushFP -3'Accessing b@-3'
+Load 
+Add 
+PushFP -4'Accessing c@-4'
+Load 
+PushFP -5'Accessing d@-5'
+Load 
+Div 
+Sub 
+PushFP -6'Accessing e@-6'
+Load 
+Add 
+Store 
+PushFP 4'Accessing m@4'
+Load 
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+PushImmediate 1
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+PushLabel 'dealloc-scope_0x7f950f5b3160'
+JumpIndirect 
+Label 'dealloc-scope_0x7f950f5b3160'
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+JumpIfNotZero 'foo__int_int_int_int_int_int__ret__int__-bail'
+Label 'foo__int_int_int_int_int_int__ret__int__-bail'
+Noop 'Consume the BAIL status, protocol of early return from nested scope'
+PushSP -1'Decrement SP'
+PopSP 
+Noop 'Retrieve fp offset: 1'
+Noop 'Retrieve RA to return out of function'
+PushFP 1
+Load 
+JumpIndirect 'Function return (might be implicit)'
+Label 'main____ret__void__''Function label'
+Noop 'Store RA passed in from Call()@FP+1'
+PushFP 1
+Store 
+Noop '============'
+Noop 'Symbol table'
+Noop '============'
+Noop 'm: offset 4'
+Noop 'x: offset 5'
+Noop 'y: offset 6'
+Noop 'z: offset 7'
+Noop 'a: offset 8'
+Noop 'b: offset 9'
+Noop 'c: offset 10'
+Noop '============'
+PushFP 0
+PushImmediate 8
+Add 
+PushImmediate 10
+Store 
+PushFP 0
+PushImmediate 9
+Add 
+PushImmediate 20
+Store 
+PushFP 0
+PushImmediate 10
+Add 
+PushImmediate 30
+Store 
+PushFP 0
+PushImmediate 5
+Add 
+PushImmediate 40
+Store 
+PushFP 0
+PushImmediate 6
+Add 
+PushImmediate 50
+Store 
+PushFP 0
+PushImmediate 7
+Add 
+PushImmediate 60
+Store 
+PushFP 0
+PushImmediate 4
+Add 
+Noop 'None'
+Noop 'callexpr_bare: omega/foo'
+PushFP 7'Accessing z@7'
+Load 
+PushFP 6'Accessing y@6'
+Load 
+PushFP 5'Accessing x@5'
+Load 
+PushFP 10'Accessing c@10'
+Load 
+PushFP 9'Accessing b@9'
+Load 
+PushFP 8'Accessing a@8'
+Load 
+PushImmediate 0'alloc RET'
+PushSP 0'Back up SP'
+PushFP 0'Back up FP'
+PushImmediate 0"alloc FP', RA"
+PushImmediate 0"alloc FP', RA"
+SaveEvalStack 'Dump previous func stack to memstack'
+PushSP -4'Set FP to be at offset 0, relative to new function scope'
+PopFP 
+PushLabel 'foo__int_int_int_int_int_int__ret__int__''Begin calling foo'
+Call 'Call foo'
+RestoreEvalStack 
+Pop 
+Pop 
+Pop 
+PopFP 'Restore the old FP'
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+Store 
+PushFP 4'Accessing m@4'
+Load 
+Print 
+PushImmediate 0
+PushSP 0'Push retval to stack'
+Swap 
+Store 'Assign value of retval to stack'
+PushSP 1'Move stack pointer forward to preserve RET'
+PopSP 
+Label 'dealloc-scope_0x7f950f5ebd60'
+PushSP -1'Restore RET'
+Load 
+PushSP -1'Decrement SP to pop RET'
+PopSP 
+JumpIfNotZero 'main____ret__void__-bail'
+Label 'main____ret__void__-bail'
+Noop 'Consume the BAIL status, protocol of early return from nested scope'
+PushSP -1'Decrement SP'
+PopSP 
+Noop 'Retrieve fp offset: 1'
+Noop 'Retrieve RA to return out of function'
+PushFP 1
+Load 
+JumpIndirect 'Function return (might be implicit)'
