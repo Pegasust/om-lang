@@ -1,0 +1,206 @@
+Noop 'call main'
+Noop '-callexpr_bare: omega/main'
+Noop 'alloc sz:5(psz:0)'
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+SaveEvalStack 
+Noop 'Initialize FP and BAIL'
+Noop 'BAIL: NO_BAIL'
+PushFP 2'lval_offset: 2'
+PushImmediate 0
+Store 
+PushFP 0'Store our old FP'
+Noop 'Assign this FP = SP - 4'
+PushSP -4'Set FP to new function scope memstack location'
+PopFP 
+Noop "Finish storing the caller's FP to the callee's frame"
+Noop "store caller's FP to FP_CALLER_OFFSET"
+PushFP 1'lval_offset: 1'
+Swap 
+Store 
+Noop '-Call main'
+PushLabel 'fn_main()->void'
+Call 'call main'
+Noop '-Epilogue: Return FP to caller, and RET as rval'
+Noop 'Retrieve ideal stack for processing'
+Noop 'stack push RET'
+PushFP -1
+Load 
+Noop 'Set FP to caller'
+Noop 'stack push FP_CALLER'
+PushFP 1
+Load 
+PopFP 'FP = FP_CALLER'
+Noop 'Dealloc fsize (5)'
+RestoreEvalStack 
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Noop '-RET as rval'
+Halt 
+Label 'fn_foo1()->void'
+Noop 'Store RA to memstack'
+PushFP 0'lval_offset: 0'
+Swap 
+Store 
+Noop 'allocate func vars'
+SaveEvalStack 'Allocate func vars to memstack'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 1
+Print 
+PushImmediate 2
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 3
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 4
+Print 
+PushImmediate 5
+Print 
+PushImmediate 6
+Print 
+Label 'dealloc-scope_0x7f210125f640'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f210125f5e0'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 7
+Print 
+PushImmediate 8
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 9
+Print 
+PushImmediate 10
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 11
+Print 
+Label 'dealloc-scope_0x7f210125f7f0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f210125f760'
+Label 'dealloc-scope_0x7f210125f760'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f210125e3b0'
+Label 'dealloc-scope_0x7f210125e3b0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f210125f5e0'
+Label 'dealloc-scope_0x7f210125f5e0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f210125f4f0'
+Label 'dealloc-scope_0x7f210125f4f0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'fn_foo1()->void-bail'
+Label 'fn_foo1()->void-bail'
+RestoreEvalStack 'Dealloc func vars from memstack'
+PushFP 0
+Load 
+JumpIndirect 
+Label 'fn_main()->void'
+Noop 'Store RA to memstack'
+PushFP 0'lval_offset: 0'
+Swap 
+Store 
+Noop 'allocate func vars'
+SaveEvalStack 'Allocate func vars to memstack'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 99
+Print 
+Noop '-callexpr_bare: omega/foo1'
+Noop 'alloc sz:5(psz:0)'
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+SaveEvalStack 
+Noop 'Initialize FP and BAIL'
+Noop 'BAIL: NO_BAIL'
+PushFP 2'lval_offset: 2'
+PushImmediate 0
+Store 
+PushFP 0'Store our old FP'
+Noop 'Assign this FP = SP - 4'
+PushSP -4'Set FP to new function scope memstack location'
+PopFP 
+Noop "Finish storing the caller's FP to the callee's frame"
+Noop "store caller's FP to FP_CALLER_OFFSET"
+PushFP 1'lval_offset: 1'
+Swap 
+Store 
+Noop '-Call foo1'
+PushLabel 'fn_foo1()->void'
+Call 'call foo1'
+Noop '-Epilogue: Return FP to caller, and RET as rval'
+Noop 'Retrieve ideal stack for processing'
+Noop 'stack push RET'
+PushFP -1
+Load 
+Noop 'Set FP to caller'
+Noop 'stack push FP_CALLER'
+PushFP 1
+Load 
+PopFP 'FP = FP_CALLER'
+Noop 'Dealloc fsize (5)'
+RestoreEvalStack 
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Noop '-RET as rval'
+Pop 'Disregard return value'
+PushImmediate 100
+Print 
+PushImmediate 101
+Print 
+PushImmediate 102
+Print 
+Label 'dealloc-scope_0x7f210125e9e0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'fn_main()->void-bail'
+Label 'fn_main()->void-bail'
+RestoreEvalStack 'Dealloc func vars from memstack'
+PushFP 0
+Load 
+JumpIndirect 

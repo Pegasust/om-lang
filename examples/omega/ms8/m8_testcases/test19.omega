@@ -1,0 +1,47 @@
+func foo2(){
+    {
+        {
+            {
+                {
+                    print 14
+                    print 17
+                    print 18
+                }
+            }
+            print 14
+            print 17
+            print 18
+        }
+        print 14
+        print 17
+        print 18
+    }
+}
+func foo1(){
+    print 12
+    {
+        print 13
+        {
+            {
+                print 14 
+            }
+        }
+        call foo2()
+        {
+            call foo2()
+            {
+                {
+                    call foo2()
+                }
+            }
+        }
+    }
+}
+func main(){
+    call foo1()
+    print 12
+    call foo1()
+    {
+        print 13
+    }
+}

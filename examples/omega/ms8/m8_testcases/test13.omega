@@ -1,0 +1,58 @@
+func g(){
+    print 9
+    {
+        print 101
+        print 102
+        {
+            print 103
+            print 104
+            {
+                print 105
+                {
+                    print 106
+                }
+            }
+        }
+    }
+}
+func f(){
+    print 112
+    print 114
+    call g()
+    print 115
+    call g()
+}
+func e(){
+    {
+        print 121
+        print 122
+        {
+            print 123
+            print 124 
+            {
+                print 125
+            }
+        }
+    }
+    print 126
+    call f()
+}
+func main(){
+    print 1
+    print 5
+    print 11
+    {
+        print 12
+        print 13
+        {
+            print 14
+            call g()
+        }
+        {
+            call f()
+            {
+                call e()
+            }
+        }
+    }
+}

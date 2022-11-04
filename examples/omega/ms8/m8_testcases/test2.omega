@@ -1,0 +1,8 @@
+func foo(){
+    print 4 
+}
+func main(){
+    print 100
+    call foo()
+    print 3
+}

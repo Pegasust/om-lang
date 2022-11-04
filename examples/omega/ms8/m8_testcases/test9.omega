@@ -1,0 +1,56 @@
+func foo(){
+    print 9
+    {
+        print 10
+    }
+    print 11 
+    {
+        print 90
+    }
+    print 91 
+    print 92 
+    print 93
+   
+}
+func foo1(){
+    print 101
+    {
+        print 102
+    }
+    {
+        print 103
+    }
+}
+func foo2(){
+    print 2002
+    {
+        print 2003
+        print 2004
+        print 2005
+    }
+    {
+        print 400
+        {
+            print 401
+        }
+    }
+}
+func main(){
+    print 98
+    {
+        print 99
+        call foo()
+        print 100
+    }
+    {
+        print 2000
+        call foo1()
+        print 20001
+    }
+    {
+        print 300
+        print 301
+        call foo2()
+    }
+    print 99
+}

@@ -1,0 +1,45 @@
+func g() {
+    print 1
+    {
+        print 8
+        print 9
+        print 10
+        print 11
+        {
+            print 12
+            {
+                print 13
+            }
+            {
+                print 14
+                print 100
+                {
+                    print 101
+                    {
+                        print 102
+                    }
+                }
+            }
+        }
+    }
+}
+func f() {
+    print 2
+    {
+        call g()
+    }
+    {
+        {
+            call g()
+        }
+    }
+    call g()
+    print 3
+    call g()
+}
+func main(){
+    print 4
+    call f()
+    call g()
+    print 5
+}

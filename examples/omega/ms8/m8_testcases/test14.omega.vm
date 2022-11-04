@@ -54,9 +54,57 @@ Noop '+--------------+'
 Noop '| Symbol table |'
 Noop '+--------------+'
 Noop '+--------------+'
-PushImmediate 1
+PushImmediate 9
 Print 
-Label 'dealloc-scope_0x7f3d06ecf190'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 1011
+Print 
+PushImmediate 1012
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 1033
+Print 
+PushImmediate 1045
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 1056
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 106
+Print 
+Label 'dealloc-scope_0x7f6772b10b80'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b10b20'
+Label 'dealloc-scope_0x7f6772b10b20'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b10a90'
+Label 'dealloc-scope_0x7f6772b10a90'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b10a00'
+Label 'dealloc-scope_0x7f6772b10a00'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b10940'
+Label 'dealloc-scope_0x7f6772b10940'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
@@ -77,8 +125,14 @@ Noop '+--------------+'
 Noop '| Symbol table |'
 Noop '+--------------+'
 Noop '+--------------+'
-PushImmediate 2
+PushImmediate 10
 Print 
+PushImmediate 11
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
 Noop '-callexpr_bare: omega/g'
 Noop 'alloc sz:5(psz:0)'
 PushImmediate 0
@@ -123,8 +177,6 @@ Pop
 Pop 
 Noop '-RET as rval'
 Pop 'Disregard return value'
-PushImmediate 3
-Print 
 Noop '-callexpr_bare: omega/g'
 Noop 'alloc sz:5(psz:0)'
 PushImmediate 0
@@ -169,7 +221,78 @@ Pop
 Pop 
 Noop '-RET as rval'
 Pop 'Disregard return value'
-Label 'dealloc-scope_0x7f3d06ecf250'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+Noop '-callexpr_bare: omega/g'
+Noop 'alloc sz:5(psz:0)'
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+SaveEvalStack 
+Noop 'Initialize FP and BAIL'
+Noop 'BAIL: NO_BAIL'
+PushFP 2'lval_offset: 2'
+PushImmediate 0
+Store 
+PushFP 0'Store our old FP'
+Noop 'Assign this FP = SP - 4'
+PushSP -4'Set FP to new function scope memstack location'
+PopFP 
+Noop "Finish storing the caller's FP to the callee's frame"
+Noop "store caller's FP to FP_CALLER_OFFSET"
+PushFP 1'lval_offset: 1'
+Swap 
+Store 
+Noop '-Call g'
+PushLabel 'fn_g()->void'
+Call 'call g'
+Noop '-Epilogue: Return FP to caller, and RET as rval'
+Noop 'Retrieve ideal stack for processing'
+Noop 'stack push RET'
+PushFP -1
+Load 
+Noop 'Set FP to caller'
+Noop 'stack push FP_CALLER'
+PushFP 1
+Load 
+PopFP 'FP = FP_CALLER'
+Noop 'Dealloc fsize (5)'
+RestoreEvalStack 
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Noop '-RET as rval'
+Pop 'Disregard return value'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 12
+Print 
+PushImmediate 16
+Print 
+Label 'dealloc-scope_0x7f6772ae32e0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772ae33a0'
+Label 'dealloc-scope_0x7f6772ae33a0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b10c10'
+Label 'dealloc-scope_0x7f6772b10c10'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772ae2650'
+Label 'dealloc-scope_0x7f6772ae2650'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
@@ -192,6 +315,37 @@ Noop '+--------------+'
 Noop '+--------------+'
 PushImmediate 4
 Print 
+PushImmediate 5
+Print 
+PushImmediate 6
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 7
+Print 
+PushImmediate 8
+Print 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+PushImmediate 1
+Print 
+PushImmediate 2
+Print 
+PushImmediate 3
+Print 
+Label 'dealloc-scope_0x7f6772b10d90'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b10d00'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
 Noop '-callexpr_bare: omega/f'
 Noop 'alloc sz:5(psz:0)'
 PushImmediate 0
@@ -236,6 +390,10 @@ Pop
 Pop 
 Noop '-RET as rval'
 Pop 'Disregard return value'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
 Noop '-callexpr_bare: omega/g'
 Noop 'alloc sz:5(psz:0)'
 PushImmediate 0
@@ -280,9 +438,75 @@ Pop
 Pop 
 Noop '-RET as rval'
 Pop 'Disregard return value'
-PushImmediate 5
-Print 
-Label 'dealloc-scope_0x7f3d06ece500'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+Noop '-callexpr_bare: omega/g'
+Noop 'alloc sz:5(psz:0)'
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+SaveEvalStack 
+Noop 'Initialize FP and BAIL'
+Noop 'BAIL: NO_BAIL'
+PushFP 2'lval_offset: 2'
+PushImmediate 0
+Store 
+PushFP 0'Store our old FP'
+Noop 'Assign this FP = SP - 4'
+PushSP -4'Set FP to new function scope memstack location'
+PopFP 
+Noop "Finish storing the caller's FP to the callee's frame"
+Noop "store caller's FP to FP_CALLER_OFFSET"
+PushFP 1'lval_offset: 1'
+Swap 
+Store 
+Noop '-Call g'
+PushLabel 'fn_g()->void'
+Call 'call g'
+Noop '-Epilogue: Return FP to caller, and RET as rval'
+Noop 'Retrieve ideal stack for processing'
+Noop 'stack push RET'
+PushFP -1
+Load 
+Noop 'Set FP to caller'
+Noop 'stack push FP_CALLER'
+PushFP 1
+Load 
+PopFP 'FP = FP_CALLER'
+Noop 'Dealloc fsize (5)'
+RestoreEvalStack 
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Noop '-RET as rval'
+Pop 'Disregard return value'
+Label 'dealloc-scope_0x7f6772b10400'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b104c0'
+Label 'dealloc-scope_0x7f6772b104c0'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772ae3c70'
+Label 'dealloc-scope_0x7f6772ae3c70'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772b10d00'
+Label 'dealloc-scope_0x7f6772b10d00'
+Noop 'Peak BAIL'
+PushSP -1
+Load 
+JumpIfNotZero 'dealloc-scope_0x7f6772ae3370'
+Label 'dealloc-scope_0x7f6772ae3370'
 Noop 'Peak BAIL'
 PushSP -1
 Load 

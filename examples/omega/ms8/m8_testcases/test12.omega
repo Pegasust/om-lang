@@ -7,7 +7,7 @@ func f() {
     print 3
     call g()
 }
-func main() {
+func main(){
     print 4
     call f()
     call g()

@@ -1,0 +1,16 @@
+func fun1(){
+    print 8
+    {
+        print 1
+        {
+            print 2
+        }
+    }
+}
+func main(){
+    call fun1()
+    print 90
+    {
+        print 2000
+    }
+}

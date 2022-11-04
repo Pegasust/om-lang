@@ -27,8 +27,8 @@ def main():
         raise RuntimeError(f"Compiling {fname} yields None for some reason")
 
     with open(args.output, "w") as f:
-        stdout.writelines(
-            (vm_insns.dis(isns)+"\n" for isns in compiled_source))
+        # stdout.writelines(
+        #     (vm_insns.dis(isns)+"\n" for isns in compiled_source))
         f.writelines((vm_insns.dis(isns)+"\n" for isns in compiled_source))
 
     if args.run:

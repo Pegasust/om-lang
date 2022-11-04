@@ -1,0 +1,51 @@
+func foo1(){
+    print 3
+    print 4
+    print 5
+    {
+        print 9
+        print 11
+    }
+    {
+        {
+            print 12
+        }
+    }
+}
+func foo(){
+    print 78
+    print 79
+    {
+        print 69
+        print 70
+        {
+            {
+                print 71
+                {
+                    print 75
+                    {
+                        {
+                            call foo1()
+                        }
+                    }
+                }
+            }
+            call foo1()
+        }
+    }
+}
+
+func main(){
+    print 11
+    print 12
+    print 13
+    {
+        {
+            {
+                {
+                    call foo()
+                }
+            }
+        }
+    }
+}

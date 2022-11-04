@@ -1,0 +1,13 @@
+func foo1(){
+    print 4 
+    {
+        print 5
+    }
+}
+func foo2(){
+    print 6
+}
+func main(){
+    call foo1()
+    call foo2()
+}
