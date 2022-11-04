@@ -67,9 +67,7 @@ def _Program(ast: asts.Program) -> list[Insn]:
         if func_decl.id.token.value == "main":
             main = func_decl
     return flatten_list((
-        _cmt("=== start ==="),
         callexpr_bare(main.id, [], cmt="call main") if main else [],
-        _cmt("=== func decls ==="),
         *(_FuncDecl(decl) for decl in ast.decls)
     ))
 
@@ -106,9 +104,10 @@ def callexpr_bare(func_id: asts.Id, args: list[asts.Expr], cmt=None):
         _cmt(cmt),
         _cmt(f"callexpr_bare: omega/{func_name}"),
 
-        stack_malloc(alloc_sz, cmt=f"Alloc fsize({alloc_sz}) for args & reserved")[1],
+        stack_malloc(
+            alloc_sz, cmt=f"alloc sz:{alloc_sz}(psz:{param_size})")[1],
         [SaveEvalStack()],
-        # TODO: We need to merge this with the stack malloc for RET FP RA BAIL
+
         *(assign(-2-i, rval(arg), cmt="Assign arg to memstack")
           for i, arg in enumerate(args)),
 
@@ -136,7 +135,7 @@ def callexpr_bare(func_id: asts.Id, args: list[asts.Expr], cmt=None):
 
         _cmt("Epilogue: Return FP to caller, and RET as rval"),
         _cmt("Retrieve ideal stack for processing"), [
-            *retrieve(RET_FP_OFFSET, "Retrieve RET"),
+            *retrieve(RET_FP_OFFSET),
         ],
         _cmt("Set FP to caller"), [
             *retrieve(FP_CALLER_OFFSET),
@@ -161,12 +160,12 @@ def rval_CallExpr(ast: asts.CallExpr) -> list[Insn]:
 
 
 def _lval_offset(fp_offset: int) -> list[Insn]:
-    return [PushFP(fp_offset, comment = f"lval_offset: {fp_offset}")]
+    return [PushFP(fp_offset, comment=f"lval_offset: {fp_offset}")]
 
 
 def retrieve(fp_offset: int, cmt: Optional[str] = None) -> list[Insn]:
     return flatten_list((
-        [Noop(comment=f"Retrieve fp offset: {fp_offset}"), Noop(comment=cmt)],
+        _cmt(cmt),
         [PushFP(fp_offset)],
         [Load()]
     ))
@@ -174,7 +173,7 @@ def retrieve(fp_offset: int, cmt: Optional[str] = None) -> list[Insn]:
 
 def assign(fp_offset: int, rval_insn: list[Insn], cmt: Optional[str] = None) -> list[Insn]:
     return flatten_list((
-        [Noop(comment=cmt)],
+        _cmt(cmt),
         _lval_offset(fp_offset),
         rval_insn,
         [Store()],
@@ -255,7 +254,7 @@ def _ctrl_and(left: asts.Expr, right: asts.Expr, label: str, cond: bool,
     match cond:
         case True:
             # Template of TRUE in and
-            fall_label=control_label(
+            fall_label = control_label(
                 [left, right], f"and-{label}-{cond}-{sense}")
             return flatten_list((
                 control(left, fall_label, not sense),
@@ -320,18 +319,18 @@ def option_unwrap_or(opt: Optional[T], default: T) -> T:
     return opt if opt is not None else default
 
 
-def stack_malloc(atomic_sz: int, cmt = None) -> tuple[int, list[Insn]]:
-    return (atomic_sz, [Noop(cmt)] + [PushImmediate(0)] * atomic_sz)
+def stack_malloc(atomic_sz: int, cmt=None) -> tuple[int, list[Insn]]:
+    return (atomic_sz, _cmt(cmt) + [PushImmediate(0)] * atomic_sz)
 
 
 def stack_calloc(ty: symbols.Type, elem_cnt: int, imm: Optional[int] = None) \
         -> tuple[int, list[Insn]]:
-    atomic_sz=(ty.size() * elem_cnt)
+    atomic_sz = (ty.size() * elem_cnt)
     return (atomic_sz, [PushImmediate(option_unwrap_or(imm, 0))] * atomic_sz)
 
 
-def stack_free(atomic_sz: int, cmt = None) -> list[Insn]:
-    return [Noop(cmt)] + [Pop()] * atomic_sz
+def stack_free(atomic_sz: int, cmt=None) -> list[Insn]:
+    return _cmt(cmt) + [Pop()] * atomic_sz
 
 
 def _cmt(cmt: Optional[str]) -> list[Insn]:
@@ -339,17 +338,17 @@ def _cmt(cmt: Optional[str]) -> list[Insn]:
         if cmt else []
 
 
-def _CompoundStmt(ast: asts.CompoundStmt, parent_dealloc: str, cmt = None) -> list[Insn]:
+def _CompoundStmt(ast: asts.CompoundStmt, parent_dealloc: str, cmt=None) -> list[Insn]:
     # TODO: Revise to v2 func call
-    my_dealloc_label=f"dealloc-{scope_label(ast.local_scope)}"
+    my_dealloc_label = f"dealloc-{scope_label(ast.local_scope)}"
 
-    stmts=(_Stmt(stmt, my_dealloc_label) for stmt in ast.stmts)
-    isns_stmts=flatten_list(stmt for stmt in stmts)
+    stmts = (_Stmt(stmt, my_dealloc_label) for stmt in ast.stmts)
+    isns_stmts = flatten_list(stmt for stmt in stmts)
 
-    isns_return=_ReturnStmt(ast.return_stmt, my_dealloc_label) \
+    isns_return = _ReturnStmt(ast.return_stmt, my_dealloc_label) \
         if ast.return_stmt else []
 
-    isns_bail=flatten_list((
+    isns_bail = flatten_list((
         stack_peek(),
         [
             JumpIfNotZero(parent_dealloc)
@@ -360,15 +359,15 @@ def _CompoundStmt(ast: asts.CompoundStmt, parent_dealloc: str, cmt = None) -> li
 
     return flatten_list((
         _cmt("""
-        ============
-        Symbol table
-        ============
+        +--------------+
+        | Symbol table |
+        +--------------+
         """),
         _cmt("\n".join(
             f"{s.id.token.value}: offset {s.id.symbol.offset}"
             for s in ast.decls)),
         _cmt("""
-        ============
+        +--------------+
         """),
         isns_stmts,
         isns_return,
@@ -381,19 +380,20 @@ def _FuncDecl(ast: asts.FuncDecl) -> list[Insn]:
     # TODO: Revise to v2 func call
 
     # TODO: func decl allocate all the space necessary for all vars
-    func_type=ast.id.symbol.get_type()
+    func_type = ast.id.symbol.get_type()
     assert isinstance(func_type, symbols.FuncType)
-    frame_size=func_type.frame_size
-    func_done=f"{func_label(ast.id)}-bail"
+    frame_size = func_type.frame_size
+    func_done = f"{func_label(ast.id)}-bail"
     # handle ast.body
     # ast.params is handled by callee
-    ret_isns=[
+    ret_isns = [
         JumpIndirect()
     ]
 
     return flatten_list((
-        [Label(func_label(ast.id), "Function label")],
-        assign(RA_FP_OFFSET, [Swap()], cmt="Store RA passed in from Call()@FP+1"),
+        [Label(func_label(ast.id))],
+        _cmt("Store RA to memstack"),
+        assign(RA_FP_OFFSET, [Swap()]),
         stack_malloc(frame_size, "allocate func vars")[1],
         [SaveEvalStack("Allocate func vars to memstack")],
         _CompoundStmt(ast.body, func_done, cmt="The main exec of func"),
@@ -402,9 +402,9 @@ def _FuncDecl(ast: asts.FuncDecl) -> list[Insn]:
         ],
         [RestoreEvalStack("Dealloc func vars from memstack")],
         stack_free(frame_size),
-        retrieve(RA_FP_OFFSET, "Retrieve RA to return out of function"),
+        retrieve(RA_FP_OFFSET),
         [
-            JumpIndirect(comment="Function return (might be implicit)")
+            JumpIndirect()
         ]
     ))
 
@@ -447,7 +447,6 @@ def stack_peek(cmt=None) -> list[Insn]:
     return flatten_list((
         _cmt(cmt),
         [
-            Noop("stack peek"),
             PushSP(-1),
             Load()
         ],
@@ -467,22 +466,21 @@ def stack_pop_retrieve(cmt=None) -> list[Insn]:
 
 def stack_pop(cmt: Optional[str] = None) -> list[Insn]:
     return [
-        Noop(comment=cmt),
+        *_cmt(cmt),
         PushSP(-1, "Decrement SP"),
         PopSP()
     ]
 
 
 def _ReturnStmt(ast: asts.ReturnStmt, dealloc_label: str) -> list[Insn]:
-    if ast.expr is None:
-        isns_expr = []
-    else:
+    isns_expr = _cmt("return"+("" if not ast.expr else " expr"))
+    if ast.expr is not None:
         # rval and store return value
-        isns_expr = rval(ast.expr)
-        isns_expr.extend(stack_emplace())
+        isns_expr = []
+        isns_expr.extend(assign(RET_FP_OFFSET, rval(ast.expr), "store RET"))
 
     # mark BAIL
-    isns_expr.extend(stack_emplace(BAIL))
+    isns_expr.extend(assign(BAIL_FP_OFFSET, [PushImmediate(BAIL)], "set BAIL"))
     # jump to the dealloc section of the enclosing scope
     isns_expr.extend([
         PushLabel(dealloc_label),
@@ -503,8 +501,8 @@ def lval(e: asts.Expr) -> list[Insn]:
 
 def lval_id(e: asts.IdExpr, cmt=None) -> list[Insn]:
     return [
-        Noop(cmt),
-        PushFP(e.id.symbol.offset, comment=f"lval_id: {e.id.symbol.offset}")
+        *_cmt(cmt),
+        PushFP(e.id.symbol.offset, comment=f"lval for: {e.id.token.value}")
     ]
 
 
@@ -528,14 +526,14 @@ def _TypeString(ty: symbols.Type, coord: asts.Coord):
             return "void"
         case symbols.FuncType(params=params, ret=ret_ty):
             params_s = "_".join(_TypeString(p, coord) for p in params)
-            return f"__{params_s}__ret__{_TypeString(ret_ty, coord)}__"
+            return f"({params_s})->{_TypeString(ret_ty, coord)}"
         case _:
             error.error(f"Unsupported type: {ty.__class__.__name__}",
                         coord)
 
 
 def func_label(e: asts.Id) -> str:
-    return f"{e.token.value}{_TypeString(e.symbol.get_type(), e.token.coord)}"
+    return f"fn_{e.token.value}{_TypeString(e.symbol.get_type(), e.token.coord)}"
 
 
 def scope_label(s: symbols.Scope) -> str:

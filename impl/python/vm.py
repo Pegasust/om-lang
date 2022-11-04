@@ -201,7 +201,7 @@ class Execution:
         o = self
         while o is not None:
             if self.debug_step:
-                input("Press enter to continue next step")
+                input("Enter>>")
             o = self.step()
             if self.verbose:
                 self.dump_state()

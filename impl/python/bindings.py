@@ -6,11 +6,14 @@ import error
 import symbols
 import datetime
 
+
 def debug_log(*args):
     with open("debug.txt", "w+") as f:
         print(datetime.datetime.now(), *args, file=f)
 
 # This is the entry point for the visitor.
+
+
 def program(ast: asts.Program):
     _Program(ast)
 
@@ -21,25 +24,25 @@ def _Program(ast: asts.Program):
     # just yet!
     # monofile repo
     global_scope = symbols.GlobalScope()
+    unscoped: list[asts.Id] = []
     for decl in ast.decls:
         decl.func_scope = symbols.FuncScope(global_scope)
-        (_func_symb, unscoped) = _FuncDecl(decl)
+        (_func_symb, _unscoped) = _FuncDecl(decl)
+        unscoped.extend(_unscoped)
         func_symb = _func_symb.id.symbol
         assert isinstance(func_symb, symbols.IdSymbol)
         assert isinstance(func_symb.get_type(), symbols.FuncType)
         func_symb.scope = global_scope
         global_scope.symtab[func_symb.name] = func_symb
-        for symb_id in unscoped:
-            symb = symb_id.symbol
-            assert isinstance(symb, symbols.IdSymbol)
-            func_symb = global_scope.lookup(symb.name)
-            if not func_symb:
-                # warning?
-                # print(f"WARNING: symbol {symb} not found on global scope")
-                continue
-            symb.set_type(func_symb.get_type())
-            symb.scope = global_scope
-            symb_id.semantic_type = symb.get_type()
+
+    # Bind unscope variables
+    for symb_id in unscoped:
+        func_symb = global_scope.lookup(symb_id.token.value)
+        if not func_symb:
+            error.error(f"Unscoped symbol not found on global scope{symb_id}",
+                        symb_id.token.coord)
+        symb_id.symbol = func_symb
+        symb_id.semantic_type = func_symb.get_type()
 
 
 def _Stmt(ast: asts.Stmt):
@@ -153,6 +156,7 @@ def _Id(ast: asts.Id):
     # ast.symbol.name = ast.token.value
     return ast
 
+
 def _AssignStmt(ast: asts.AssignStmt):
     symbs = _Expr(ast.lhs)
     symbs.extend(_Expr(ast.rhs))
@@ -247,23 +251,21 @@ def _CompoundStmt(ast: asts.CompoundStmt):
         unscoped_symbs.extend(_Stmt(ast.return_stmt))
 
     # Drain filter that retains the AST nodes that are still unscoped
-    still_unscoped = list(unscoped_symbs) * 0 # borrow type with empty list
+    still_unscoped = list(unscoped_symbs) * 0  # borrow type with empty list
     for id in unscoped_symbs:
         declared_symbol = local_scope.lookup(id.token.value)
         # print(f"{symb=}, {decl=}")
         if not declared_symbol:
             # This better be a global var or function
-            debug_log(f"Rare: {id.token.value} is not declared")
-            if not isinstance(id.semantic_type, symbols.FuncType):
-                error.error(f"Usage of undefined symbol id {id.token.value}", id.token.coord)
             still_unscoped.append(id)
             continue
         if not isinstance(declared_symbol, symbols.IdSymbol):
-            error.error(f"INTERNAL: {id.token.value} points to, non IdSymbol: {declared_symbol}", id.token.coord)
+            error.error(
+                f"INTERNAL: {id.token.value} points to, non IdSymbol: {declared_symbol}", id.token.coord)
         id.symbol = declared_symbol
         id.semantic_type = declared_symbol.get_type()
 
-    return still_unscoped # Since we have processed all unscoped symbols
+    return still_unscoped  # Since we have processed all unscoped symbols
 
 
 def _FuncDecl(ast: asts.FuncDecl):
@@ -285,10 +287,11 @@ def _FuncDecl(ast: asts.FuncDecl):
     if ast.ret_type_ast is not None:
         ret_type = _Type(ast.ret_type_ast)
     # assign function type of this function
-    
+
     func_id.symbol = symbols.IdSymbol(func_id.token.value, func_scope)
     func_id.symbol.set_type(
-        symbols.FuncType([p.id.symbol.get_type() for p in param_symbs], ret_type)
+        symbols.FuncType([p.id.symbol.get_type()
+                         for p in param_symbs], ret_type)
     )
     func_scope.set_return_type(ret_type)
 
@@ -298,7 +301,7 @@ def _FuncDecl(ast: asts.FuncDecl):
     for unscoped in unscoped_symbs:
         debug_log(f"RARE: FuncDecl: {unscoped} is unscoped")
     ast.id.semantic_type = func_scope.get_return_type()
-    
+
     return (ast, unscoped_symbs)
 
 

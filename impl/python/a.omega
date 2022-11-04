@@ -1,8 +1,6 @@
-Noop '=== start ==='
 Noop 'call main'
 Noop 'callexpr_bare: omega/main'
-Noop 'Alloc fsize(6) for args & reserved'
-PushImmediate 0
+Noop 'alloc sz:5(psz:0)'
 PushImmediate 0
 PushImmediate 0
 PushImmediate 0
@@ -23,205 +21,69 @@ PushSP 0
 Swap 
 Store 
 Noop 'Call main'
-PushLabel 'main____ret__void__'
+PushLabel 'fn_main()->void'
 Call 
 Noop 'Epilogue: Return FP to caller, and RET as rval'
 Noop 'Retrieve ideal stack for processing'
-Noop 'Retrieve fp offset: -1'
-Noop 'Retrieve RET'
 PushFP -1
 Load 
 Noop 'Set FP to caller'
-Noop 'Retrieve fp offset: 1'
-Noop 
 PushFP 1
 Load 
 PopFP 
 RestoreEvalStack 
-Noop 'Dealloc fsize (6)'
-Pop 
+Noop 'Dealloc fsize (5)'
 Pop 
 Pop 
 Pop 
 Pop 
 Pop 
 Noop 'RET as rval'
-Noop '=== func decls ==='
-Label 'f1__int_bool__ret__int__''Function label'
-Noop 'Store RA passed in from Call()@FP+1'
+Label 'fn_g()->void'
+Noop 'Store RA to memstack'
 PushFP 0'lval_offset: 0'
 Swap 
 Store 
 Noop 'allocate func vars'
-PushImmediate 0
-PushImmediate 0
-PushImmediate 0
 SaveEvalStack 'Allocate func vars to memstack'
-Noop '============'
-Noop 'Symbol table'
-Noop '============'
-Noop '============'
-Noop '============'
-Noop 'Symbol table'
-Noop '============'
-Noop 'i: offset 4'
-Noop '============'
-Noop 
-PushFP 4'lval_id: 4'
-PushImmediate 10
-Store 
-Noop '============'
-Noop 'Symbol table'
-Noop '============'
-Noop 'i: offset 5'
-Noop '============'
-Noop 
-PushFP 5'lval_id: 5'
-PushImmediate 20
-Store 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
 Noop 'Print'
-PushFP 5'Accessing i@5'
-Load 
-Print 
-Label 'dealloc-scope_0x7f2bd46692a0'
-Noop 'stack peek'
-PushSP -1
-Load 
-JumpIfNotZero 'dealloc-scope_0x7f2bd463bdf0'
-Noop 
-PushFP 4'lval_id: 4'
-PushFP 4'Accessing i@4'
-Load 
 PushImmediate 1
-Add 
-Store 
-Noop 'Print'
-PushFP 4'Accessing i@4'
-Load 
 Print 
-Noop '============'
-Noop 'Symbol table'
-Noop '============'
-Noop 'b: offset 5'
-Noop '============'
-Noop 
-PushFP 5'lval_id: 5'
-PushImmediate 0'false'
-Store 
-Noop '============'
-Noop 'Symbol table'
-Noop '============'
-Noop '============'
-Noop 'Print'
-PushFP 5'Accessing b@5'
-Load 
-Print 
-Label 'dealloc-scope_0x7f2bd4669330'
-Noop 'stack peek'
+Label 'dealloc-scope_0x7fe7c7025300'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f2bd463a980'
-Label 'dealloc-scope_0x7f2bd463a980'
-Noop 'stack peek'
-PushSP -1
-Load 
-JumpIfNotZero 'dealloc-scope_0x7f2bd463bdf0'
-Label 'dealloc-scope_0x7f2bd463bdf0'
-Noop 'stack peek'
-PushSP -1
-Load 
-JumpIfNotZero 'dealloc-scope_0x7f2bd46691b0'
-Noop 'Print'
-PushFP -2'Accessing i@-2'
-Load 
-Print 
-Noop 'Print'
-PushFP -3'Accessing b@-3'
-Load 
-Print 
-PushImmediate 0
-PushSP 0'Push retval to stack'
-Swap 
-Store 'Assign value of retval to stack'
-PushSP 1'Move stack pointer forward to preserve RET'
-PopSP 
-PushImmediate 1
-PushSP 0'Push retval to stack'
-Swap 
-Store 'Assign value of retval to stack'
-PushSP 1'Move stack pointer forward to preserve RET'
-PopSP 
-PushLabel 'dealloc-scope_0x7f2bd46691b0'
-JumpIndirect 
-Label 'dealloc-scope_0x7f2bd46691b0'
-Noop 'stack peek'
-PushSP -1
-Load 
-JumpIfNotZero 'f1__int_bool__ret__int__-bail'
-Label 'f1__int_bool__ret__int__-bail'
+JumpIfNotZero 'fn_g()->void-bail'
+Label 'fn_g()->void-bail'
 RestoreEvalStack 'Dealloc func vars from memstack'
-Noop 
-Pop 
-Pop 
-Pop 
-Noop 'Retrieve fp offset: 0'
-Noop 'Retrieve RA to return out of function'
 PushFP 0
 Load 
-JumpIndirect 'Function return (might be implicit)'
-Label 'main____ret__void__''Function label'
-Noop 'Store RA passed in from Call()@FP+1'
+JumpIndirect 
+Label 'fn_f()->void'
+Noop 'Store RA to memstack'
 PushFP 0'lval_offset: 0'
 Swap 
 Store 
 Noop 'allocate func vars'
-PushImmediate 0
-PushImmediate 0
-PushImmediate 0
 SaveEvalStack 'Allocate func vars to memstack'
-Noop '============'
-Noop 'Symbol table'
-Noop '============'
-Noop 'i: offset 4'
-Noop 'b: offset 5'
-Noop '============'
-Noop 
-PushFP 4'lval_id: 4'
-PushImmediate 10
-Store 
-Noop 
-PushFP 5'lval_id: 5'
-PushImmediate 1'true'
-Store 
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
 Noop 'Print'
-PushFP 4'Accessing i@4'
-Load 
+PushImmediate 2
 Print 
-Noop 'Print'
-PushFP 5'Accessing b@5'
-Load 
-Print 
-Noop 'callexpr_bare: omega/f1'
-Noop 'Alloc fsize(8) for args & reserved'
-PushImmediate 0
-PushImmediate 0
-PushImmediate 0
+Noop 'callexpr_bare: omega/g'
+Noop 'alloc sz:5(psz:0)'
 PushImmediate 0
 PushImmediate 0
 PushImmediate 0
 PushImmediate 0
 PushImmediate 0
 SaveEvalStack 
-Noop 'Assign arg to memstack'
-PushFP -2'lval_offset: -2'
-PushFP 4'Accessing i@4'
-Load 
-Store 
-Noop 'Assign arg to memstack'
-PushFP -3'lval_offset: -3'
-PushFP 5'Accessing b@5'
-Load 
-Store 
 Noop 'Initialize FP and BAIL'
 Noop 'BAIL: NO_BAIL'
 PushFP 2'lval_offset: 2'
@@ -235,48 +97,188 @@ Noop "Finish storing the caller's FP to the callee's frame"
 PushSP 0
 Swap 
 Store 
-Noop 'Call f1'
-PushLabel 'f1__int_bool__ret__int__'
+Noop 'Call g'
+PushLabel 'fn_g()->void'
 Call 
 Noop 'Epilogue: Return FP to caller, and RET as rval'
 Noop 'Retrieve ideal stack for processing'
-Noop 'Retrieve fp offset: -1'
-Noop 'Retrieve RET'
 PushFP -1
 Load 
 Noop 'Set FP to caller'
-Noop 'Retrieve fp offset: 1'
-Noop 
 PushFP 1
 Load 
 PopFP 
 RestoreEvalStack 
-Noop 'Dealloc fsize (8)'
-Pop 
-Pop 
-Pop 
+Noop 'Dealloc fsize (5)'
 Pop 
 Pop 
 Pop 
 Pop 
 Pop 
 Noop 'RET as rval'
-Noop 
 PushSP -1'Decrement SP'
 PopSP 
-Label 'dealloc-scope_0x7f2bd463bb50'
-Noop 'stack peek'
+Noop 'Print'
+PushImmediate 3
+Print 
+Noop 'callexpr_bare: omega/g'
+Noop 'alloc sz:5(psz:0)'
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+SaveEvalStack 
+Noop 'Initialize FP and BAIL'
+Noop 'BAIL: NO_BAIL'
+PushFP 2'lval_offset: 2'
+PushImmediate 0
+Store 
+PushFP 0'Store our old FP'
+Noop 'Assign this FP = SP - 4'
+PushSP -4'Set FP to new function scope memstack location'
+PopFP 
+Noop "Finish storing the caller's FP to the callee's frame"
+PushSP 0
+Swap 
+Store 
+Noop 'Call g'
+PushLabel 'fn_g()->void'
+Call 
+Noop 'Epilogue: Return FP to caller, and RET as rval'
+Noop 'Retrieve ideal stack for processing'
+PushFP -1
+Load 
+Noop 'Set FP to caller'
+PushFP 1
+Load 
+PopFP 
+RestoreEvalStack 
+Noop 'Dealloc fsize (5)'
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Noop 'RET as rval'
+PushSP -1'Decrement SP'
+PopSP 
+Label 'dealloc-scope_0x7fe7c70253f0'
 PushSP -1
 Load 
-JumpIfNotZero 'main____ret__void__-bail'
-Label 'main____ret__void__-bail'
+JumpIfNotZero 'fn_f()->void-bail'
+Label 'fn_f()->void-bail'
 RestoreEvalStack 'Dealloc func vars from memstack'
-Noop 
-Pop 
-Pop 
-Pop 
-Noop 'Retrieve fp offset: 0'
-Noop 'Retrieve RA to return out of function'
 PushFP 0
 Load 
-JumpIndirect 'Function return (might be implicit)'
+JumpIndirect 
+Label 'fn_main()->void'
+Noop 'Store RA to memstack'
+PushFP 0'lval_offset: 0'
+Swap 
+Store 
+Noop 'allocate func vars'
+SaveEvalStack 'Allocate func vars to memstack'
+Noop '+--------------+'
+Noop '| Symbol table |'
+Noop '+--------------+'
+Noop '+--------------+'
+Noop 'Print'
+PushImmediate 4
+Print 
+Noop 'callexpr_bare: omega/f'
+Noop 'alloc sz:5(psz:0)'
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+SaveEvalStack 
+Noop 'Initialize FP and BAIL'
+Noop 'BAIL: NO_BAIL'
+PushFP 2'lval_offset: 2'
+PushImmediate 0
+Store 
+PushFP 0'Store our old FP'
+Noop 'Assign this FP = SP - 4'
+PushSP -4'Set FP to new function scope memstack location'
+PopFP 
+Noop "Finish storing the caller's FP to the callee's frame"
+PushSP 0
+Swap 
+Store 
+Noop 'Call f'
+PushLabel 'fn_f()->void'
+Call 
+Noop 'Epilogue: Return FP to caller, and RET as rval'
+Noop 'Retrieve ideal stack for processing'
+PushFP -1
+Load 
+Noop 'Set FP to caller'
+PushFP 1
+Load 
+PopFP 
+RestoreEvalStack 
+Noop 'Dealloc fsize (5)'
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Noop 'RET as rval'
+PushSP -1'Decrement SP'
+PopSP 
+Noop 'callexpr_bare: omega/g'
+Noop 'alloc sz:5(psz:0)'
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+PushImmediate 0
+SaveEvalStack 
+Noop 'Initialize FP and BAIL'
+Noop 'BAIL: NO_BAIL'
+PushFP 2'lval_offset: 2'
+PushImmediate 0
+Store 
+PushFP 0'Store our old FP'
+Noop 'Assign this FP = SP - 4'
+PushSP -4'Set FP to new function scope memstack location'
+PopFP 
+Noop "Finish storing the caller's FP to the callee's frame"
+PushSP 0
+Swap 
+Store 
+Noop 'Call g'
+PushLabel 'fn_g()->void'
+Call 
+Noop 'Epilogue: Return FP to caller, and RET as rval'
+Noop 'Retrieve ideal stack for processing'
+PushFP -1
+Load 
+Noop 'Set FP to caller'
+PushFP 1
+Load 
+PopFP 
+RestoreEvalStack 
+Noop 'Dealloc fsize (5)'
+Pop 
+Pop 
+Pop 
+Pop 
+Pop 
+Noop 'RET as rval'
+PushSP -1'Decrement SP'
+PopSP 
+Noop 'Print'
+PushImmediate 5
+Print 
+Label 'dealloc-scope_0x7fe7c70246d0'
+PushSP -1
+Load 
+JumpIfNotZero 'fn_main()->void-bail'
+Label 'fn_main()->void-bail'
+RestoreEvalStack 'Dealloc func vars from memstack'
+PushFP 0
+Load 
+JumpIndirect 
