@@ -56,7 +56,7 @@ Noop '+--------------+'
 Noop '+--------------+'
 PushImmediate 4
 Print 
-Label 'dealloc-scope_0x7f1f54c4e830'
+Label 'dealloc-scope_0x7fd07845e830'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
@@ -125,7 +125,7 @@ Noop '-RET as rval'
 Pop 'Disregard return value'
 PushImmediate 3
 Print 
-Label 'dealloc-scope_0x7f1f54c4e8f0'
+Label 'dealloc-scope_0x7fd07845e8f0'
 Noop 'Peak BAIL'
 PushSP -1
 Load 

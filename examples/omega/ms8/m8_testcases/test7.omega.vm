@@ -68,17 +68,17 @@ Noop '+--------------+'
 Noop '+--------------+'
 PushImmediate 2
 Print 
-Label 'dealloc-scope_0x7f03cdf96d10'
+Label 'dealloc-scope_0x7f7d73f42d10'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f03cdf96cb0'
-Label 'dealloc-scope_0x7f03cdf96cb0'
+JumpIfNotZero 'dealloc-scope_0x7f7d73f42cb0'
+Label 'dealloc-scope_0x7f7d73f42cb0'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f03cdf96bf0'
-Label 'dealloc-scope_0x7f03cdf96bf0'
+JumpIfNotZero 'dealloc-scope_0x7f7d73f42bf0'
+Label 'dealloc-scope_0x7f7d73f42bf0'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
@@ -151,12 +151,12 @@ Noop '+--------------+'
 Noop '+--------------+'
 PushImmediate 2000
 Print 
-Label 'dealloc-scope_0x7f03cdf96dd0'
+Label 'dealloc-scope_0x7f7d73f42dd0'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f03cdf96080'
-Label 'dealloc-scope_0x7f03cdf96080'
+JumpIfNotZero 'dealloc-scope_0x7f7d73f42080'
+Label 'dealloc-scope_0x7f7d73f42080'
 Noop 'Peak BAIL'
 PushSP -1
 Load 

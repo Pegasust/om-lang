@@ -68,11 +68,11 @@ PushImmediate 9
 Print 
 PushImmediate 11
 Print 
-Label 'dealloc-scope_0x7f5ddabc0280'
+Label 'dealloc-scope_0x7fb82cfcc280'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddabc0160'
+JumpIfNotZero 'dealloc-scope_0x7fb82cfcc160'
 Noop '+--------------+'
 Noop '| Symbol table |'
 Noop '+--------------+'
@@ -83,17 +83,17 @@ Noop '+--------------+'
 Noop '+--------------+'
 PushImmediate 12
 Print 
-Label 'dealloc-scope_0x7f5ddab92500'
+Label 'dealloc-scope_0x7fb82cf9e500'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddab91e10'
-Label 'dealloc-scope_0x7f5ddab91e10'
+JumpIfNotZero 'dealloc-scope_0x7fb82cf9de10'
+Label 'dealloc-scope_0x7fb82cf9de10'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddabc0160'
-Label 'dealloc-scope_0x7f5ddabc0160'
+JumpIfNotZero 'dealloc-scope_0x7fb82cfcc160'
+Label 'dealloc-scope_0x7fb82cfcc160'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
@@ -194,26 +194,26 @@ Pop
 Pop 
 Noop '-RET as rval'
 Pop 'Disregard return value'
-Label 'dealloc-scope_0x7f5ddab92f20'
+Label 'dealloc-scope_0x7fb82cf9ef20'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddabc0580'
-Label 'dealloc-scope_0x7f5ddabc0580'
+JumpIfNotZero 'dealloc-scope_0x7fb82cfcc580'
+Label 'dealloc-scope_0x7fb82cfcc580'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddabc0520'
-Label 'dealloc-scope_0x7f5ddabc0520'
+JumpIfNotZero 'dealloc-scope_0x7fb82cfcc520'
+Label 'dealloc-scope_0x7fb82cfcc520'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddab93340'
-Label 'dealloc-scope_0x7f5ddab93340'
+JumpIfNotZero 'dealloc-scope_0x7fb82cf9f340'
+Label 'dealloc-scope_0x7fb82cf9f340'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddabc0490'
+JumpIfNotZero 'dealloc-scope_0x7fb82cfcc490'
 Noop '-callexpr_bare: omega/foo1'
 Noop 'alloc sz:5(psz:0)'
 PushImmediate 0
@@ -258,17 +258,17 @@ Pop
 Pop 
 Noop '-RET as rval'
 Pop 'Disregard return value'
-Label 'dealloc-scope_0x7f5ddabc0490'
+Label 'dealloc-scope_0x7fb82cfcc490'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddabc0400'
-Label 'dealloc-scope_0x7f5ddabc0400'
+JumpIfNotZero 'dealloc-scope_0x7fb82cfcc400'
+Label 'dealloc-scope_0x7fb82cfcc400'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddab92470'
-Label 'dealloc-scope_0x7f5ddab92470'
+JumpIfNotZero 'dealloc-scope_0x7fb82cf9e470'
+Label 'dealloc-scope_0x7fb82cf9e470'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
@@ -355,27 +355,27 @@ Pop
 Pop 
 Noop '-RET as rval'
 Pop 'Disregard return value'
-Label 'dealloc-scope_0x7f5ddab93be0'
+Label 'dealloc-scope_0x7fb82cf9fbe0'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddab93ca0'
-Label 'dealloc-scope_0x7f5ddab93ca0'
+JumpIfNotZero 'dealloc-scope_0x7fb82cf9fca0'
+Label 'dealloc-scope_0x7fb82cf9fca0'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddab93d60'
-Label 'dealloc-scope_0x7f5ddab93d60'
+JumpIfNotZero 'dealloc-scope_0x7fb82cf9fd60'
+Label 'dealloc-scope_0x7fb82cf9fd60'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddab92e30'
-Label 'dealloc-scope_0x7f5ddab92e30'
+JumpIfNotZero 'dealloc-scope_0x7fb82cf9ee30'
+Label 'dealloc-scope_0x7fb82cf9ee30'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
-JumpIfNotZero 'dealloc-scope_0x7f5ddab933d0'
-Label 'dealloc-scope_0x7f5ddab933d0'
+JumpIfNotZero 'dealloc-scope_0x7fb82cf9f3d0'
+Label 'dealloc-scope_0x7fb82cf9f3d0'
 Noop 'Peak BAIL'
 PushSP -1
 Load 

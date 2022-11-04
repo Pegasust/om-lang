@@ -58,7 +58,7 @@ PushImmediate 1
 Print 
 PushImmediate 2
 Print 
-Label 'dealloc-scope_0x7faac2fd2620'
+Label 'dealloc-scope_0x7f4234aae620'
 Noop 'Peak BAIL'
 PushSP -1
 Load 
