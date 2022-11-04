@@ -1,6 +1,7 @@
 from typing import List, Dict, Tuple, Optional
 
 from vm_insns import *
+import sys
 
 
 class Execution:
@@ -10,11 +11,16 @@ class Execution:
         stack: List[int],
         memory: List[int],
         regs: Dict[str, int],
+        max_insns=1_000_000_000,
+        vm_stdout=sys.stdout
     ):
         self.insns: List[Insn] = insns
         self.stack: List[int] = stack
         self.memory: List[int] = memory
         self.regs: Dict[str, int] = regs
+        self.max_insns = max_insns
+        self.vm_stdout = vm_stdout
+
         if "FP" not in self.regs:
             self.regs["FP"] = 0
         if "SP" not in self.regs:
@@ -146,7 +152,7 @@ class Execution:
                 self.stack.append(int(self.stack.pop() == 0))
                 self.regs["PC"] += 1
             case Print():
-                print(self.stack.pop())
+                print(self.stack.pop(), file=self.vm_stdout)
                 self.regs["PC"] += 1
             case PushFP(offset=offset):
                 self.stack.append(self.regs["FP"] + offset)
@@ -199,11 +205,17 @@ class Execution:
             print("Begin Execution")
             self.dump_state()
         o = self
+
         while o is not None:
             if self.debug_step:
                 input("Enter>>")
             o = self.step()
             if self.verbose:
                 self.dump_state()
+            self.max_insns -= 1
+            if self.max_insns == 0:
+                break
+
         if self.verbose:
             print("End Execution")
+

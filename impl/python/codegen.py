@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Iterable, Union
+from typing import Optional, TypeVar, Iterable
 import error
 import asts
 import symbols
@@ -68,7 +68,8 @@ def _Program(ast: asts.Program) -> list[Insn]:
             main = func_decl
     return flatten_list((
         callexpr_bare(main.id, [], cmt="call main") if main else [],
-        *(_FuncDecl(decl) for decl in ast.decls)
+        [Halt()],
+        *(_FuncDecl(decl) for decl in ast.decls),
     ))
 
 
@@ -102,7 +103,7 @@ def callexpr_bare(func_id: asts.Id, args: list[asts.Expr], cmt=None):
 
     return flatten_list((
         _cmt(cmt),
-        _cmt(f"callexpr_bare: omega/{func_name}"),
+        _cmt(f"-callexpr_bare: omega/{func_name}"),
 
         stack_malloc(
             alloc_sz, cmt=f"alloc sz:{alloc_sz}(psz:{param_size})")[1],
@@ -122,30 +123,29 @@ def callexpr_bare(func_id: asts.Id, args: list[asts.Expr], cmt=None):
         ],
 
         _cmt("Finish storing the caller's FP to the callee's frame"), [
-            PushSP(0),
-            Swap(),
-            Store(),
+            *assign(FP_CALLER_OFFSET, [Swap()], "store caller's FP to FP_CALLER_OFFSET")
         ],
 
-        _cmt(f"Call {func_name}"),
+        _cmt(f"-Call {func_name}"),
         [
             PushLabel(func_label(func_id)),
-            Call(),
+            Call(f"call {func_name}"),
         ],
 
-        _cmt("Epilogue: Return FP to caller, and RET as rval"),
+        _cmt("-Epilogue: Return FP to caller, and RET as rval"),
         _cmt("Retrieve ideal stack for processing"), [
-            *retrieve(RET_FP_OFFSET),
+            *retrieve(RET_FP_OFFSET, "stack push RET"),
         ],
         _cmt("Set FP to caller"), [
-            *retrieve(FP_CALLER_OFFSET),
-            PopFP(),
+            *retrieve(FP_CALLER_OFFSET, "stack push FP_CALLER"),
+            PopFP("FP = FP_CALLER"),
         ],
 
+        _cmt(f"Dealloc fsize ({alloc_sz})"),
         [RestoreEvalStack()],
-        stack_free(alloc_sz, cmt=f"Dealloc fsize ({alloc_sz})"),
+        stack_free(alloc_sz),
 
-        _cmt("RET as rval"), [
+        _cmt("-RET as rval"), [
             # We have already put RET right after FP_CALLER
             # Since we popped FP_CALLER once, the thing left on the stack
             # is the return value
@@ -171,7 +171,8 @@ def retrieve(fp_offset: int, cmt: Optional[str] = None) -> list[Insn]:
     ))
 
 
-def assign(fp_offset: int, rval_insn: list[Insn], cmt: Optional[str] = None) -> list[Insn]:
+def assign(fp_offset: int, rval_insn: list[Insn], cmt: Optional[str] = None)\
+        -> list[Insn]:
     return flatten_list((
         _cmt(cmt),
         _lval_offset(fp_offset),
@@ -192,7 +193,7 @@ def _AssignStmt(ast: asts.AssignStmt) -> list[Insn]:
 def _PrintStmt(ast: asts.PrintStmt) -> list[Insn]:
     # handle ast.expr
     return flatten_list((
-        _cmt("Print"),
+        # _cmt("Print"),
         rval(ast.expr),
         [Print()],
     ))
@@ -307,11 +308,10 @@ def control_UnaryOp(e: asts.UnaryOp, label: str, sense: bool) -> list[Insn]:
 
 def _CallStmt(ast: asts.CallStmt) -> list[Insn]:
     # handle ast.call
-    # HACK: Disregard return optimization
     return flatten_list((
         rval_CallExpr(ast.call),
         # Disregard return value
-        stack_pop()
+        [Pop("Disregard return value")],
     ))
 
 
@@ -349,7 +349,7 @@ def _CompoundStmt(ast: asts.CompoundStmt, parent_dealloc: str, cmt=None) -> list
         if ast.return_stmt else []
 
     isns_bail = flatten_list((
-        stack_peek(),
+        stack_peek("Peak BAIL"),
         [
             JumpIfNotZero(parent_dealloc)
         ]
